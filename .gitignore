@@ -1,3 +1,10 @@
+#Ignore output folders
+bin/
+lib/
+#ignore binary output
+tokenizer
+*_gen.cpp
+
 # Compiled Object files
 *.slo
 *.lo
