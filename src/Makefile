@@ -4,6 +4,7 @@ LDLIBS = -lfl
 LEX = flex
 BISON = bison
 EXE = pslang
+RM = rm -f
 
 all: pslang
 
@@ -25,10 +26,10 @@ Driver.o: Driver.cpp Driver.h
 
 .PHONY: clean
 clean:
-	rm *.hh 
-	rm *.cc
-	rm parser.output
-	rm *.o
-	rm $(EXE)
+	$(RM) *.hh 
+	$(RM) *.cc
+	$(RM) parser.output
+	$(RM) *.o
+	$(RM) $(EXE)
 
 
