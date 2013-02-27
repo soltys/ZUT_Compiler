@@ -1,22 +1,34 @@
 CXX = g++
-CXFLAGS = -Wall
+CXXFLAGS = -g -Wall -std=c++11
 LEX = flex
 BISON = bison
 EXE = pslang
 
-all: lexer.cc parser.cc
-	$(CXX) lexer.cc parser.cc -lfl -o $(EXE)
+all: pslang
 
-lexer.cc: lexer.l parser.hh
-	$(LEX) --outfile=lexer.cc lexer.l
+pslang: parser.o lexer.o main.o Driver.o
+	$(CXX) $(CXXFLAGS) $^ -lfl -o $(EXE)
 
-parser.cc parser.hh: parser.y
-	bison -v parser.y
+lexer.o: lexer.l parser.hh
+	$(LEX) --outfile=lexer.cc $<
+	$(CXX) $(CXXFLAGS) -c -o lexer.o lexer.cc
 
+parser.o parser.hh: parser.y
+	bison -v $<
+	$(CXX) $(CXXFLAGS) -c parser.cc -o parser.o
+
+main.o: main.cpp
+	$(CXX) $(CXXFLAGS) -c main.cpp -o main.o
+
+Driver.o: Driver.cpp Driver.h
+	$(CXX) $(CXXFLAGS) -c Driver.cpp -o $@
 
 .PHONY: clean
 clean:
-	rm *.hh
+	rm *.hh 
 	rm *.cc
-	rm $(EXE)
 	rm parser.output
+	rm *.o
+	rm $(EXE)
+
+

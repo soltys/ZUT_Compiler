@@ -1,0 +1,19 @@
+#ifndef PSLANG_DRIVER_H
+#define PSLANG_DRIVER_H 1
+#include "Scanner.hpp"
+#include "parser.hh"
+#include <memory>
+namespace PSLang{
+    class Driver{
+    public:
+        Driver():parser(nullptr),scanner(nullptr){};
+        virtual ~Driver();
+        void parse(const char *filename);
+
+    private:
+        std::unique_ptr<PSLang::Parser> parser;
+        std::unique_ptr<PSLang::Scanner> scanner;
+    };
+}
+
+#endif //PSLANG_DRIVER_H

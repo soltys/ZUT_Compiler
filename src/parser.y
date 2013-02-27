@@ -1,18 +1,38 @@
-%{
-#include <cstdio>
-#include <iostream>
-using namespace std;
-
-// stuff from flex that bison needs to know about:
-extern "C" int yylex();
-extern "C" int yyparse();
-extern "C" FILE *yyin;
- 
-void yyerror(const char *s);
-%}
-
+%skeleton "lalr1.cc"
+%require "2.5"
+%debug
 %defines "parser.hh"
 %output  "parser.cc"
+%define namespace "PSLang"
+%define parser_class_name "Parser"
+
+%code requires {
+    namespace PSLang{
+        class Driver;
+        class Scanner;
+    }
+
+
+}
+
+%lex-param {Scanner &scanner}
+%parse-param {Scanner &scanner}
+
+%lex-param {Driver &driver}
+%parse-param {Driver &driver}
+
+%code{
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include "Driver.h"
+ 
+static int yylex(PSLang::Parser::semantic_type *yylval,
+                     PSLang::Scanner  &scanner,
+                    PSLang::Driver   &driver);
+}
+
 
 // Bison fundamentally works by asking flex to get the next token, which it
 // returns as an object of type "yystype".  But tokens could be of any
@@ -36,35 +56,25 @@ void yyerror(const char *s);
 // something silly to echo to the screen what bison gets from flex.  We'll
 // make a real one shortly:
 snazzle:
-	snazzle INT_NUMBER       { cout << "bison found an int: " << $2 << endl; }
-	| snazzle FLOAT_NUMBER   { cout << "bison found a float: " << $2 << endl; }
-	| snazzle STRING  { cout << "bison found a string: " << $2 << endl; }
-	| INT_NUMBER            { cout << "bison found an int: " << $1 << endl; }
-	| FLOAT_NUMBER          { cout << "bison found a float: " << $1 << endl; }
-	| STRING         { cout << "bison found a string: " << $1 << endl; }
+	snazzle INT_NUMBER       { std::cout << "bison found an int: " << $2 << std::endl; }
+	| snazzle FLOAT_NUMBER   { std::cout << "bison found a float: " << $2 << std::endl; }
+	| snazzle STRING  { std::cout << "bison found a string: " << $2 << std::endl; }
+	| INT_NUMBER            { std::cout << "bison found an int: " << $1 << std::endl; }
+	| FLOAT_NUMBER          { std::cout << "bison found a float: " << $1 << std::endl; }
+	| STRING         { std::cout << "bison found a string: " << $1 << std::endl; }
 	;
 %%
 
-main() {
-	// open a file handle to a particular file:
-	FILE *myfile = fopen("input.txt", "r");
-	// make sure it is valid:
-	if (!myfile) {
-		cout << "I can't open input.txt!" << endl;
-		return -1;
-	}
-	// set flex to read from it instead of defaulting to STDIN:
-	yyin = myfile;
-	
-	// parse through the input until there is no more:
-	do {
-		yyparse();
-	} while (!feof(yyin));
-	
+void PSLang::Parser::error( const PSLang::Parser::location_type &l,
+                            const std::string &err_message)
+{
+    std::cerr << "Error: "<< err_message << "\n";
 }
 
-void yyerror(const char *s) {
-	cout << "EEK, parse error!  Message: " << s << endl;
-	// might as well halt now:
-	exit(-1);
+#include "Scanner.hpp"
+static int yylex(PSLang::Parser::semantic_type *yylval,
+                 PSLang::Scanner  &scanner,
+                 PSLang::Driver   &driver)
+{
+   return( scanner.yylex(yylval) );
 }
