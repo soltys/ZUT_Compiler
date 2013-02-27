@@ -1,16 +1,22 @@
+CXX = g++
+CXFLAGS = -Wall
 LEX = flex
-CC = g++
-CFLAGS = -Wall -g -std=c++11
+BISON = bison
+EXE = pslang
 
-all: tokenizer
+all: lexer.cc parser.cc
+	$(CXX) lexer.cc parser.cc -lfl -o $(EXE)
 
-tokens_gen.cpp: tokens.l 
-	$(LEX) --outfile=tokens_gen.cpp tokens.l 
+lexer.cc: lexer.l parser.hh
+	$(LEX) --outfile=lexer.cc lexer.l
 
-tokenizer: tokens_gen.cpp
-	$(CC) $(CFLAGS) tokens_gen.cpp -lfl -o tokenizer
+parser.cc parser.hh: parser.y
+	bison -v parser.y
 
+
+.PHONY: clean
 clean:
-	rm tokenizer *_gen.cpp
-	
-
+	rm *.hh
+	rm *.cc
+	rm $(EXE)
+	rm parser.output
