@@ -8,7 +8,7 @@ PSLang::Driver::~Driver()
 //    if(parser != nullptr) delete(parser);
 }
 
-void PSLang::Driver::parse(const char *filename)
+void PSLang::Driver::compile(const char *filename,const char*outputfile)
 {
     std::cout << "Driver - parse - passed filename=" << filename;
 }

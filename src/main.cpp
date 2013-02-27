@@ -3,10 +3,24 @@
 
 #include "Driver.h"
 
+
+static void printHelp()
+{
+	std::cout << "PSLang usage:" <<std::endl;
+    std::cout << "pslang input [output]" <<std::endl;
+}
+
 int main(const int argc, const char** argv)
 {
-    PSLang::Driver driver;
+	if(argc == 1 || argc > 3)
+	{
+		printHelp();
+		return EXIT_FAILURE;
+	}
 
-    driver.parse("Hardcoded string\n");
-    return 0;
+    PSLang::Driver driver;
+    driver.compile(argv[1],"compiled");
+
+    return EXIT_SUCCESS;
 }
+

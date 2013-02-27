@@ -8,7 +8,7 @@ namespace PSLang{
     public:
         Driver():parser(nullptr),scanner(nullptr){};
         virtual ~Driver();
-        void parse(const char *filename);
+        void compile(const char *filename,const char* output);
 
     private:
         std::unique_ptr<PSLang::Parser> parser;

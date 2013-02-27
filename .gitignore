@@ -1,9 +1,20 @@
 #Ignore output folders
 bin/
 lib/
-#ignore binary output
-tokenizer
-*_gen.cpp
+
+#ignore generated files
+*.cc
+*.hh
+parser.output
+
+#ignore eclipse files
+.cproject
+.project
+
+#ignore binary file
+pslang
+
+
 
 # Compiled Object files
 *.slo
