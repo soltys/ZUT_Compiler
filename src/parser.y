@@ -10,9 +10,8 @@
     namespace PSLang{
         class Driver;
         class Scanner;
+        class Expression;
     }
-
-
 }
 
 %lex-param {Scanner &scanner}
@@ -28,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include "Driver.h"
+#include "Expression.h"
  
 static int yylex(PSLang::Parser::semantic_type *yylval,
                      PSLang::Scanner  &scanner,
@@ -44,9 +44,8 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 	int ival;
 	float fval;
 	char *sval;
+	PSLang::Expression* expression;
 }
-
- 
 
 
 // "terminal symbols"
@@ -64,24 +63,47 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %token OP_MINUS
 %token OP_MULTIPLY
 %token OP_DIVISION
-
+%token OP_ASSIGNMENT
+//%token <expression> expr
 
 %%
 // this is the actual grammar that bison will parse, but for right now it's just
 // something silly to echo to the screen what bison gets from flex.  We'll
 // make a real one shortly:
 
-
 input:
-	input INT_NUMBER       { std::cout << "bison found an int: " << $2 << std::endl; }
-	|input FLOAT_NUMBER   { std::cout << "bison found a float: " << $2 << std::endl; }
-	| input IDENTIFIER  { std::cout << "bison found a IDENTIFIER: " << $2 << std::endl; }
-	| input STRING  { std::cout << "bison found a string: " << $2 << std::endl; }
-	| INT_NUMBER            { std::cout << "bison found an int: " << $1 << std::endl; }
-	| FLOAT_NUMBER          { std::cout << "bison found a float: " << $1 << std::endl; }
-	| IDENTIFIER         { std::cout << "bison found a IDENTIFIER: " << $1 << std::endl; }
-	| STRING         { std::cout << "bison found a string: " << $1 << std::endl; }
+	| block
 	;
+block:
+	STARTBLOCK exprs ENDBLOCK {std::cout << "Block nr: " << std::endl;}
+	;
+	
+exprs
+	:exprs expr
+	| expr
+	
+		
+assignment
+	: IDENTIFIER OP_ASSIGNMENT INT_NUMBER {std::cout << "Przypisanie do zmiennej: " << $1 << " wartości " << $3 << std::endl;}
+	
+value
+	: INT_NUMBER
+	| FLOAT_NUMBER
+	| STRING
+expr
+	:assignment
+	|value
+	
+//input:
+//	input INT_NUMBER       { std::cout << "bison found an int: " << $2 << std::endl; }
+//	|input FLOAT_NUMBER   { std::cout << "bison found a float: " << $2 << std::endl; }
+//	| input IDENTIFIER  { std::cout << "bison found a IDENTIFIER: " << $2 << std::endl; }
+//	| input STRING  { std::cout << "bison found a string: " << $2 << std::endl; }
+//	| INT_NUMBER            { std::cout << "bison found an int: " << $1 << std::endl; }
+//	| FLOAT_NUMBER          { std::cout << "bison found a float: " << $1 << std::endl; }
+//	| IDENTIFIER         { std::cout << "bison found a IDENTIFIER: " << $1 << std::endl; }
+//	| STRING         { std::cout << "bison found a string: " << $1 << std::endl; }
+//	;
 %%
 
 void PSLang::Parser::error( const PSLang::Parser::location_type &l,

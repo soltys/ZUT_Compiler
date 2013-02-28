@@ -5,10 +5,10 @@ LEX = flex
 BISON = bison
 EXE = pslang
 RM = rm -f
-
+OBJS = parser.o lexer.o main.o Driver.o Expression.o
 all: pslang
 
-pslang: parser.o lexer.o main.o Driver.o
+pslang: $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $(EXE)
 
 lexer.o: lexer.l parser.hh Scanner.hpp
@@ -23,6 +23,7 @@ main.o: main.cpp
 
 Driver.o: Driver.cpp Driver.h
 
+Expression.o: Expression.cpp Expression.h
 
 .PHONY: clean
 clean:

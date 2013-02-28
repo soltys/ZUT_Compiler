@@ -26,7 +26,7 @@ PLUS        "\+"
 MINUS       "\-"
 MULTIPLY    "\*"
 DIVISION    "\/"
-
+ASSIGNMENT  "\="
 %%
 
 [ \t] ;
@@ -37,10 +37,7 @@ DIVISION    "\/"
 \"[^"]*\" { yylval->sval = strdup(yytext); return token::STRING;}
 [a-zA-Z0-9_-]+ { yylval->sval = strdup(yytext); return token::IDENTIFIER;}
 
-{PLUS} {return token::OP_PLUS;}
-{MINUS} {return token::OP_MINUS;}
-{MULTIPLY} {return token::OP_MULTIPLY;}
-{DIVISION} {return token::OP_DIVISION;}
+{ASSIGNMENT} {return token::OP_ASSIGNMENT;}
 
 {STARTBLOCK} {return token::STARTBLOCK;}
 {ENDBLOCK}   {return token::ENDBLOCK;}
@@ -53,3 +50,9 @@ DIVISION    "\/"
 .    ;
 
 %%
+/*
+{PLUS} {return token::OP_PLUS;}
+{MINUS} {return token::OP_MINUS;}
+{MULTIPLY} {return token::OP_MULTIPLY;}
+{DIVISION} {return token::OP_DIVISION;}
+*/
