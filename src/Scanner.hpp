@@ -28,6 +28,11 @@ namespace PSLang{
     	lineNumber++;
     }
 
+    int getLineNumber()
+    {
+    	return lineNumber;
+    }
+
     private:
 
     int yylex();

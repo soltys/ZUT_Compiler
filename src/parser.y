@@ -87,7 +87,8 @@ input:
 void PSLang::Parser::error( const PSLang::Parser::location_type &l,
                             const std::string &err_message)
 {
-    std::cerr << "Error: "<< err_message << "\n";
+    std::cerr << "Line: "<< scanner.getLineNumber() <<std::endl;
+    		  << "Error: "<< err_message << "\n";
 }
 
 #include "Scanner.hpp"

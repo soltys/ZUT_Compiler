@@ -10,7 +10,9 @@ namespace PSLang{
         virtual ~Driver();
         void compile(const char *filename,const char* output);
 
+        void setVerbose(const bool& value);
     private:
+        bool _isVerbose;
         std::unique_ptr<PSLang::Parser> parser;
         std::unique_ptr<PSLang::Scanner> scanner;
     };
