@@ -11,7 +11,7 @@ all: pslang
 pslang: parser.o lexer.o main.o Driver.o
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $(EXE)
 
-lexer.o: lexer.l parser.hh
+lexer.o: lexer.l parser.hh Scanner.hpp
 	$(LEX) --outfile=lexer.cc $<
 	$(CXX) $(CXXFLAGS) -c -o $@ lexer.cc
 

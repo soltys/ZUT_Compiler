@@ -14,7 +14,7 @@ namespace PSLang{
     class Scanner : public yyFlexLexer{
     public:
 
-    Scanner(std::istream *in):yyFlexLexer(in),yylval(new PSLang::Parser::semantic_type)
+    Scanner(std::istream *in):yyFlexLexer(in),yylval(new PSLang::Parser::semantic_type),lineNumber(0)
                               {};
 
     int yylex(PSLang::Parser::semantic_type *lval)
@@ -23,9 +23,16 @@ namespace PSLang{
         return( yylex() );
 
     }
+    void incrementLineNumber()
+    {
+    	lineNumber++;
+    }
+
     private:
+
     int yylex();
     PSLang::Parser::semantic_type *yylval;
+    int lineNumber;
 };
 }
 

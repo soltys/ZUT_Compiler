@@ -8,7 +8,7 @@ using namespace std;
 #include "parser.hh"
 
 typedef PSLang::Parser::token token;
-
+#define yyterminate() return(0)
 %}
 
 %option debug
@@ -17,14 +17,39 @@ typedef PSLang::Parser::token token;
 %option noyywrap
 %option c++
 
+
+STARTBLOCK  "\{"
+ENDBLOCK    "\}"
+LPAREN      "\("
+RPAREN      "\)"
+PLUS        "\+"
+MINUS       "\-"
+MULTIPLY    "\*"
+DIVISION    "\/"
+
 %%
 
 [ \t] ;
-[\n]  ;
+[\n]   {incrementLineNumber();};
 
 [0-9]+\.[0-9]+ {yylval->fval = atof(yytext); return token::FLOAT_NUMBER;}
 [0-9]+ {yylval->ival = atoi(yytext); return token::INT_NUMBER;}
-[a-zA-Z0-9]+ { yylval->sval = strdup(yytext); return token::STRING;}
+\"[^"]*\" { yylval->sval = strdup(yytext); return token::STRING;}
+[a-zA-Z0-9_-]+ { yylval->sval = strdup(yytext); return token::IDENTIFIER;}
+
+{PLUS} {return token::OP_PLUS;}
+{MINUS} {return token::OP_MINUS;}
+{MULTIPLY} {return token::OP_MULTIPLY;}
+{DIVISION} {return token::OP_DIVISION;}
+
+{STARTBLOCK} {return token::STARTBLOCK;}
+{ENDBLOCK}   {return token::ENDBLOCK;}
+{LPAREN} {return token::LPAREN;}
+{RPAREN} {return token::RPAREN;}
+
+<<EOF>> {
+			yyterminate();
+		}
 .    ;
 
 %%

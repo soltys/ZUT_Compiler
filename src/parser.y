@@ -24,6 +24,7 @@
 %code{
 #include <cstdio>
 #include <cstdlib>
+
 #include <fstream>
 #include <iostream>
 #include "Driver.h"
@@ -45,22 +46,40 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 	char *sval;
 }
 
-// define the "terminal symbol" token types I'm going to use (in CAPS
-// by convention), and associate each with a field of the union:
+ 
+
+
+// "terminal symbols"
 %token <ival> INT_NUMBER
 %token <fval> FLOAT_NUMBER
+%token <sval> IDENTIFIER
 %token <sval> STRING
+
+%token LPAREN
+%token RPAREN
+%token STARTBLOCK
+%token ENDBLOCK
+
+%token OP_PLUS
+%token OP_MINUS
+%token OP_MULTIPLY
+%token OP_DIVISION
+
 
 %%
 // this is the actual grammar that bison will parse, but for right now it's just
 // something silly to echo to the screen what bison gets from flex.  We'll
 // make a real one shortly:
-snazzle:
-	snazzle INT_NUMBER       { std::cout << "bison found an int: " << $2 << std::endl; }
-	| snazzle FLOAT_NUMBER   { std::cout << "bison found a float: " << $2 << std::endl; }
-	| snazzle STRING  { std::cout << "bison found a string: " << $2 << std::endl; }
+
+
+input:
+	input INT_NUMBER       { std::cout << "bison found an int: " << $2 << std::endl; }
+	|input FLOAT_NUMBER   { std::cout << "bison found a float: " << $2 << std::endl; }
+	| input IDENTIFIER  { std::cout << "bison found a IDENTIFIER: " << $2 << std::endl; }
+	| input STRING  { std::cout << "bison found a string: " << $2 << std::endl; }
 	| INT_NUMBER            { std::cout << "bison found an int: " << $1 << std::endl; }
 	| FLOAT_NUMBER          { std::cout << "bison found a float: " << $1 << std::endl; }
+	| IDENTIFIER         { std::cout << "bison found a IDENTIFIER: " << $1 << std::endl; }
 	| STRING         { std::cout << "bison found a string: " << $1 << std::endl; }
 	;
 %%
