@@ -9,6 +9,10 @@ using namespace std;
 
 typedef PSLang::Parser::token token;
 #define yyterminate() return(0)
+
+#define SAVE_TOKEN yylval->string = new std::string(yytext, yyleng)
+#define TOKEN(t) (yylval->token = token::t)
+
 %}
 
 %option debug
@@ -18,31 +22,30 @@ typedef PSLang::Parser::token token;
 %option c++
 
 
-STARTBLOCK  "\{"
-ENDBLOCK    "\}"
-LPAREN      "\("
-RPAREN      "\)"
-PLUS        "\+"
-MINUS       "\-"
-MULTIPLY    "\*"
-DIVISION    "\/"
-ASSIGNMENT  "\="
+
 %%
 
-[ \t] ;
-[\n]   {incrementLineNumber();};
-
-[0-9]+\.[0-9]+ {yylval->fval = atof(yytext); return token::FLOAT_NUMBER;}
-[0-9]+ {yylval->ival = atoi(yytext); return token::INT_NUMBER;}
-\"[^"]*\" { yylval->sval = strdup(yytext); return token::STRING;}
-[a-zA-Z0-9_-]+ { yylval->sval = strdup(yytext); return token::IDENTIFIER;}
-
-{ASSIGNMENT} {return token::OP_ASSIGNMENT;}
-
-{STARTBLOCK} {return token::STARTBLOCK;}
-{ENDBLOCK}   {return token::ENDBLOCK;}
-{LPAREN} {return token::LPAREN;}
-{RPAREN} {return token::RPAREN;}
+[ \t\n]                 ;
+[a-zA-Z_][a-zA-Z0-9_]*  SAVE_TOKEN; return token::TIDENTIFIER;
+[0-9]+\.[0-9]*          SAVE_TOKEN; return token::TDOUBLE;
+[0-9]+                  SAVE_TOKEN; return token::TINTEGER;
+"="                     return TOKEN(TEQUAL);
+"=="                    return TOKEN(TCEQ);
+"!="                    return TOKEN(TCNE);
+"<"                     return TOKEN(TCLT);
+"<="                    return TOKEN(TCLE);
+">"                     return TOKEN(TCGT);
+">="                    return TOKEN(TCGE);
+"("                     return TOKEN(TLPAREN);
+")"                     return TOKEN(TRPAREN);
+"{"                     return TOKEN(TLBRACE);
+"}"                     return TOKEN(TRBRACE);
+"."                     return TOKEN(TDOT);
+","                     return TOKEN(TCOMMA);
+"+"                     return TOKEN(TPLUS);
+"-"                     return TOKEN(TMINUS);
+"*"                     return TOKEN(TMUL);
+"/"                     return TOKEN(TDIV);
 
 <<EOF>> {
 			yyterminate();
@@ -50,9 +53,3 @@ ASSIGNMENT  "\="
 .    ;
 
 %%
-/*
-{PLUS} {return token::OP_PLUS;}
-{MINUS} {return token::OP_MINUS;}
-{MULTIPLY} {return token::OP_MULTIPLY;}
-{DIVISION} {return token::OP_DIVISION;}
-*/

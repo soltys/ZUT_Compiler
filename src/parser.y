@@ -10,7 +10,12 @@
     namespace PSLang{
         class Driver;
         class Scanner;
-        class Expression;
+        class Node;
+        class NBlock;
+        class NExpression;
+        class NStatement;
+        class NIdentifier;
+        class NVariableDeclaration;        
     }
 }
 
@@ -27,8 +32,7 @@
 #include <fstream>
 #include <iostream>
 #include "Driver.h"
-#include "Expression.h"
- 
+#include "Node.h"
 static int yylex(PSLang::Parser::semantic_type *yylval,
                      PSLang::Scanner  &scanner,
                     PSLang::Driver   &driver);
@@ -41,75 +45,100 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 // holding each of the types of tokens that Flex could return, and have Bison
 // use that union instead of "int" for the definition of "yystype":
 %union {
-	int ival;
-	float fval;
-	char *sval;
-	PSLang::Expression* expression;
+    PSLang::Node *node;
+    PSLang::NBlock *block;
+    PSLang::NExpression *expr;
+    PSLang::NStatement *stmt;
+    PSLang::NIdentifier *ident;
+    PSLang::NVariableDeclaration *var_decl;
+    std::vector<NVariableDeclaration*> *varvec;
+    std::vector<NExpression*> *exprvec;
+    std::string *string;
+    int token;
 }
 
 
-// "terminal symbols"
-%token <ival> INT_NUMBER
-%token <fval> FLOAT_NUMBER
-%token <sval> IDENTIFIER
-%token <sval> STRING
+%token <string> TIDENTIFIER TINTEGER TDOUBLE
+%token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
+%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT
+%token <token> TPLUS TMINUS TMUL TDIV
 
-%token LPAREN
-%token RPAREN
-%token STARTBLOCK
-%token ENDBLOCK
+%type <ident> ident
+%type <expr> numeric expr 
+%type <varvec> func_decl_args
+%type <exprvec> call_args
+%type <block> program stmts block
+%type <stmt> stmt var_decl func_decl
+%type <token> comparison
 
-%token OP_PLUS
-%token OP_MINUS
-%token OP_MULTIPLY
-%token OP_DIVISION
-%token OP_ASSIGNMENT
-//%token <expression> expr
+/* Operator precedence for mathematical operators */
+%left TPLUS TMINUS
+%left TMUL TDIV
+
+%start program
 
 %%
 // this is the actual grammar that bison will parse, but for right now it's just
 // something silly to echo to the screen what bison gets from flex.  We'll
 // make a real one shortly:
 
-input:
-	| block
-	;
-block:
-	STARTBLOCK exprs ENDBLOCK {std::cout << "Block nr: " << std::endl;}
-	;
-	
-exprs
-	:exprs expr
-	| expr
-	
-		
-assignment
-	: IDENTIFIER OP_ASSIGNMENT INT_NUMBER {std::cout << "Przypisanie do zmiennej: " << $1 << " wartości " << $3 << std::endl;}
-	
-value
-	: INT_NUMBER
-	| FLOAT_NUMBER
-	| STRING
-expr
-	:assignment
-	|value
-	
-//input:
-//	input INT_NUMBER       { std::cout << "bison found an int: " << $2 << std::endl; }
-//	|input FLOAT_NUMBER   { std::cout << "bison found a float: " << $2 << std::endl; }
-//	| input IDENTIFIER  { std::cout << "bison found a IDENTIFIER: " << $2 << std::endl; }
-//	| input STRING  { std::cout << "bison found a string: " << $2 << std::endl; }
-//	| INT_NUMBER            { std::cout << "bison found an int: " << $1 << std::endl; }
-//	| FLOAT_NUMBER          { std::cout << "bison found a float: " << $1 << std::endl; }
-//	| IDENTIFIER         { std::cout << "bison found a IDENTIFIER: " << $1 << std::endl; }
-//	| STRING         { std::cout << "bison found a string: " << $1 << std::endl; }
-//	;
+program : stmts { driver.programBlock = $1; }
+        ;
+        
+stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }
+      | stmts stmt { $1->statements.push_back($<stmt>2); }
+      ;
+
+stmt : var_decl | func_decl
+     | expr { $$ = new NExpressionStatement(*$1); }
+     ;
+
+block : TLBRACE stmts TRBRACE { $$ = $2; }
+      | TLBRACE TRBRACE { $$ = new NBlock(); }
+      ;
+
+var_decl : ident ident { $$ = new PSLang::NVariableDeclaration(*$1, *$2); }
+         | ident ident TEQUAL expr { $$ = new PSLang::NVariableDeclaration(*$1, *$2, $4); }
+         ;
+        
+func_decl : ident ident TLPAREN func_decl_args TRPAREN block 
+            { $$ = new NFunctionDeclaration(*$1, *$2, *$4, *$6); delete $4; }
+          ;
+    
+func_decl_args : /*blank*/  { $$ = new VariableList(); }
+          | var_decl { $$ = new VariableList(); $$->push_back($<var_decl>1); }
+          | func_decl_args TCOMMA var_decl { $1->push_back($<var_decl>3); }
+          ;
+
+ident : TIDENTIFIER { $$ = new NIdentifier(*$1); delete $1; }
+      ;
+
+numeric : TINTEGER { $$ = new NInteger(atol($1->c_str())); delete $1; }
+        | TDOUBLE { $$ = new NDouble(atof($1->c_str())); delete $1; }
+        ;
+    
+expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }
+     | ident TLPAREN call_args TRPAREN { $$ = new PSLang::NMethodCall(*$1, *$3); delete $3; }
+     | ident { $<ident>$ = $1; }
+     | numeric
+     | expr comparison expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | TLPAREN expr TRPAREN { $$ = $2; }
+     ;
+    
+call_args : /*blank*/  { $$ = new ExpressionList(); }
+          | expr { $$ = new ExpressionList(); $$->push_back($1); }
+          | call_args TCOMMA expr  { $1->push_back($3); }
+          ;
+
+comparison : TCEQ | TCNE | TCLT | TCLE | TCGT | TCGE 
+           | TPLUS | TMINUS | TMUL | TDIV
+           ;
 %%
 
 void PSLang::Parser::error( const PSLang::Parser::location_type &l,
                             const std::string &err_message)
 {
-    std::cerr << "Line: "<< scanner.getLineNumber() <<std::endl
+    std::cerr << "Line: "<< l.begin.line <<std::endl
     		  << "Error: "<< err_message << "\n";
 }
 
