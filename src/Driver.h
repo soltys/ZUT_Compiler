@@ -14,7 +14,7 @@ public:
 	}
 	;
 	virtual ~Driver();
-	void compile(const char *filename, const char* output);
+	void compile(const std::string& filename, const std::string& output);
 
 	void setVerbose(const bool& value);
 

@@ -5,7 +5,7 @@ LEX = flex
 BISON = bison
 EXE = pslang
 RM = rm -f
-OBJS = lexer.o main.o Driver.o CodeGen.o Code.o parser.o 
+OBJS = lexer.o main.o Driver.o CodeGen.o  parser.o Instruction.o 
 all: pslang
 
 pslang: $(OBJS)
@@ -23,10 +23,9 @@ main.o: main.cpp
 
 Driver.o: Driver.cpp Driver.h
 
-Code.o: Code.cpp Code.h
-
 CodeGen.o :CodeGen.cpp Node.h
 
+Instruction.o: Instruction.cpp Instruction.h
 
 .PHONY: clean
 clean:

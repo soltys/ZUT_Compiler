@@ -5,6 +5,7 @@ lib/
 #ignore generated files
 *.cc
 *.hh
+*.asm
 parser.output
 
 #ignore eclipse files

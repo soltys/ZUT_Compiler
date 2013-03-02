@@ -1,59 +1,101 @@
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include "Node.h"
+#include "Instruction.h"
+#include "CodeGen.h"
 namespace PSLang {
-
-Code* NInteger::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+std::ostream& operator <<(std::ostream& o, const Instruction& a) {
+	o << a.instruction << std::endl;
+	return o;
+}
+template<class T>
+std::string toString(T a) {
+	std::stringstream out;
+	out << a;
+	return out.str();
 }
 
-Code* NDouble::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void CodeGenContext::generateCode(NBlock &root) {
+	std::cout << "Generating code...\n";
+	root.codeGen(*this);
+	std::cout << "Code is generated.\n";
 }
 
-Code* NString::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NInteger::codeGen(CodeGenContext& context) {
+	context.outputStream << Instruction("MOV", "R0", toString(value));
+	context.resultRegister = std::string("R0");
 }
 
-Code* NIdentifier::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NDouble::codeGen(CodeGenContext& context) {
+	context.outputStream << Instruction("MOV", "F0", toString(value));
+	context.resultRegister = "F0";
 }
 
-Code* NMethodCall::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NString::codeGen(CodeGenContext& context) {
+
 }
 
-Code* NBinaryOperator::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NIdentifier::codeGen(CodeGenContext& context) {
+
 }
 
-Code* NAssignment::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NMethodCall::codeGen(CodeGenContext& context) {
+
 }
 
-Code* NBlock::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NBinaryOperator::codeGen(CodeGenContext& context) {
+
 }
 
-Code* NExpressionStatement::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NAssignment::codeGen(CodeGenContext& context) {
+	std::cout << "Creating assignment for " << lhs.name << std::endl;
+
+	if (context.locals.find(lhs.name) == std::end(context.locals)) {
+		throw std::runtime_error("Variable is not declared");
+	}
+	rhs.codeGen(context);
+
+	auto value = Instruction::memoryParam(context.locals[lhs.name]);
+	auto instruction = Instruction("MOV", value, context.resultRegister);
+	context.outputStream << instruction;
 }
 
-Code* NVariableDeclaration::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NBlock::codeGen(CodeGenContext& context) {
+	StatementList::const_iterator it;
+	for (it = statements.begin(); it != statements.end(); it++) {
+		std::cout << "Generating code for " << typeid(**it).name() << std::endl;
+		(**it).codeGen(context);
+	}
+
 }
 
-Code* NFunctionDeclaration::codeGen(CodeGenContext& context)
-{
-	return (nullptr);
+void NExpressionStatement::codeGen(CodeGenContext& context) {
+	expression.codeGen(context);
+}
+
+void NVariableDeclaration::codeGen(CodeGenContext& context) {
+	std::cout << "Creating variable declaration " << type.name << " " << id.name
+			<< std::endl;
+
+	if (context.locals.find(id.name) == std::end(context.locals)) {
+		int maxMemoryIndex = 0;
+		for (auto it = std::begin(context.locals);
+				it != std::end(context.locals); it++) {
+			maxMemoryIndex = std::max(maxMemoryIndex, it->second);
+		}
+
+		context.locals.insert(std::make_pair(id.name, ++maxMemoryIndex));
+	}
+
+	if (assignmentExpression != nullptr) {
+		NAssignment assn(id, *assignmentExpression);
+		assn.codeGen(context);
+	}
+}
+
+void NFunctionDeclaration::codeGen(CodeGenContext& context) {
+
 }
 
 }
