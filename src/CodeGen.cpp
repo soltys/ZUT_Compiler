@@ -18,63 +18,73 @@ std::string toString(T a) {
 
 void CodeGenContext::generateCode(NBlock &root) {
 	std::cout << "Generating code...\n";
-	root.codeGen(*this);
+	this->outputStream << root.codeGen(*this);
 	std::cout << "Code is generated.\n";
 }
 
-void NInteger::codeGen(CodeGenContext& context) {
-	context.outputStream << Instruction("MOV", "R0", toString(value));
+std::string NInteger::codeGen(CodeGenContext& context) {
+	std::stringstream ss;
+	ss << Instruction("MOV", "R0", toString(value));
 	context.resultRegister = std::string("R0");
+	return ss.str();
 }
 
-void NDouble::codeGen(CodeGenContext& context) {
-	context.outputStream << Instruction("MOV", "F0", toString(value));
+std::string NDouble::codeGen(CodeGenContext& context) {
+	std::stringstream ss;
+	ss << Instruction("MOV", "F0", toString(value));
 	context.resultRegister = "F0";
+	return ss.str();
 }
 
-void NString::codeGen(CodeGenContext& context) {
-
-}
-
-void NIdentifier::codeGen(CodeGenContext& context) {
+std::string NString::codeGen(CodeGenContext& context) {
 
 }
 
-void NMethodCall::codeGen(CodeGenContext& context) {
+std::string NIdentifier::codeGen(CodeGenContext& context) {
 
 }
 
-void NBinaryOperator::codeGen(CodeGenContext& context) {
+std::string NMethodCall::codeGen(CodeGenContext& context) {
 
 }
 
-void NAssignment::codeGen(CodeGenContext& context) {
+std::string NBinaryOperator::codeGen(CodeGenContext& context) {
+
+}
+
+std::string NAssignment::codeGen(CodeGenContext& context) {
+	std::stringstream ss;
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
 
 	if (context.locals.find(lhs.name) == std::end(context.locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
-	rhs.codeGen(context);
+	ss << rhs.codeGen(context);
 
 	auto value = Instruction::memoryParam(context.locals[lhs.name]);
 	auto instruction = Instruction("MOV", value, context.resultRegister);
-	context.outputStream << instruction;
+	ss << instruction;
+	return ss.str();
 }
 
-void NBlock::codeGen(CodeGenContext& context) {
+std::string NBlock::codeGen(CodeGenContext& context) {
+	std::stringstream ss;
 	StatementList::const_iterator it;
 	for (it = statements.begin(); it != statements.end(); it++) {
 		std::cout << "Generating code for " << typeid(**it).name() << std::endl;
-		(**it).codeGen(context);
+		ss << (**it).codeGen(context);
 	}
-
+	return ss.str();
 }
 
-void NExpressionStatement::codeGen(CodeGenContext& context) {
-	expression.codeGen(context);
+std::string NExpressionStatement::codeGen(CodeGenContext& context) {
+	std::stringstream ss;
+	ss << expression.codeGen(context);
+	return ss.str();
 }
 
-void NVariableDeclaration::codeGen(CodeGenContext& context) {
+std::string NVariableDeclaration::codeGen(CodeGenContext& context) {
+	std::stringstream ss;
 	std::cout << "Creating variable declaration " << type.name << " " << id.name
 			<< std::endl;
 
@@ -90,11 +100,12 @@ void NVariableDeclaration::codeGen(CodeGenContext& context) {
 
 	if (assignmentExpression != nullptr) {
 		NAssignment assn(id, *assignmentExpression);
-		assn.codeGen(context);
+		ss << assn.codeGen(context);
 	}
+	return ss.str();
 }
 
-void NFunctionDeclaration::codeGen(CodeGenContext& context) {
+std::string NFunctionDeclaration::codeGen(CodeGenContext& context) {
 
 }
 

@@ -60,8 +60,9 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 
 %token <string> TIDENTIFIER TINTEGER TDOUBLE
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
-%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT
+%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT TENDLINE
 %token <token> TPLUS TMINUS TMUL TDIV
+%token <token> TFOR TIF TWHILE 
 
 %type <ident> ident
 %type <expr> numeric expr 
@@ -89,7 +90,8 @@ stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }
       | stmts stmt { $1->statements.push_back($<stmt>2); }
       ;
 
-stmt : var_decl | func_decl
+stmt : var_decl 
+     | func_decl
      | expr { $$ = new NExpressionStatement(*$1); }
      ;
 
@@ -98,14 +100,14 @@ block : TLBRACE stmts TRBRACE { $$ = $2; }
       ;
 
 var_decl : ident ident { $$ = new PSLang::NVariableDeclaration(*$1, *$2); }
-         | ident ident TEQUAL expr { $$ = new PSLang::NVariableDeclaration(*$1, *$2, $4); }
+         | ident ident TEQUAL expr { $$ = new NVariableDeclaration(*$1, *$2, $4); }
          ;
         
 func_decl : ident ident TLPAREN func_decl_args TRPAREN block 
             { $$ = new NFunctionDeclaration(*$1, *$2, *$4, *$6); delete $4; }
           ;
     
-func_decl_args : /*blank*/  { $$ = new VariableList(); }
+func_decl_args :  { $$ = new VariableList(); }
           | var_decl { $$ = new VariableList(); $$->push_back($<var_decl>1); }
           | func_decl_args TCOMMA var_decl { $1->push_back($<var_decl>3); }
           ;
