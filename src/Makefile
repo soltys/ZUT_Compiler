@@ -11,6 +11,9 @@ all: pslang
 pslang: $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $(EXE)
 
+lexer: lexer.o
+	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $@ 
+
 lexer.o: lexer.l parser.hh Scanner.hpp
 	$(LEX) --outfile=lexer.cc $<
 	$(CXX) $(CXXFLAGS) -c -o $@ lexer.cc

@@ -59,8 +59,9 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 
 
 %token <string> TIDENTIFIER TINTEGER TDOUBLE
+%token <token> TSEMICOLON
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
-%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT TENDLINE
+%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT 
 %token <token> TPLUS TMINUS TMUL TDIV
 %token <token> TFOR TIF TWHILE 
 
@@ -73,8 +74,13 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %type <token> comparison
 
 /* Operator precedence for mathematical operators */
-%left TPLUS TMINUS
-%left TMUL TDIV
+%left TPLUS 
+%left TMINUS
+%left TMUL 
+%left TDIV
+
+
+
 
 %start program
 
@@ -90,9 +96,9 @@ stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }
       | stmts stmt { $1->statements.push_back($<stmt>2); }
       ;
 
-stmt : var_decl 
-     | func_decl
-     | expr { $$ = new NExpressionStatement(*$1); }
+stmt : var_decl TSEMICOLON
+     | func_decl TSEMICOLON
+     | expr TSEMICOLON { $$ = new NExpressionStatement(*$1); }
      ;
 
 block : TLBRACE stmts TRBRACE { $$ = $2; }
@@ -121,10 +127,14 @@ numeric : TINTEGER { $$ = new NInteger(atol($1->c_str())); delete $1; }
     
 expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }
      | ident TLPAREN call_args TRPAREN { $$ = new PSLang::NMethodCall(*$1, *$3); delete $3; }
-     | ident { $<ident>$ = $1; }
-     | numeric
+     | ident { $<ident>$ = $1; }     
+     | expr TPLUS expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TMINUS expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TMUL expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TDIV expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr comparison expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | TLPAREN expr TRPAREN { $$ = $2; }
+     | numeric
      ;
     
 call_args : /*blank*/  { $$ = new ExpressionList(); }
@@ -132,8 +142,7 @@ call_args : /*blank*/  { $$ = new ExpressionList(); }
           | call_args TCOMMA expr  { $1->push_back($3); }
           ;
 
-comparison : TCEQ | TCNE | TCLT | TCLE | TCGT | TCGE 
-           | TPLUS | TMINUS | TMUL | TDIV
+comparison : TCEQ | TCNE | TCLT | TCLE | TCGT | TCGE           
            ;
 %%
 

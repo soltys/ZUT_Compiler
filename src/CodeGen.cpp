@@ -4,11 +4,25 @@
 #include "Node.h"
 #include "Instruction.h"
 #include "CodeGen.h"
+#include "parser.hh"
+#include <algorithm>
 namespace PSLang {
+typedef PSLang::Parser::token token;
 std::ostream& operator <<(std::ostream& o, const Instruction& a) {
 	o << a.instruction << std::endl;
 	return o;
 }
+
+int getIndexFirstFalse(std::vector<bool>& vec) {
+	int i = 0;
+	for (auto it = std::begin(vec); it != std::end(vec); it++, i++) {
+		if (!*it) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 template<class T>
 std::string toString(T a) {
 	std::stringstream out;
@@ -18,72 +32,96 @@ std::string toString(T a) {
 
 void CodeGenContext::generateCode(NBlock &root) {
 	std::cout << "Generating code...\n";
-	this->outputStream << root.codeGen(*this);
+	root.accept(*this);
+	for (auto it = programInstructions.begin();
+			it != programInstructions.end();
+			it++) {
+		outputStream << *it;
+	}
+
 	std::cout << "Code is generated.\n";
 }
-
-std::string NInteger::codeGen(CodeGenContext& context) {
+std::string NInteger::getStringValue() {
 	std::stringstream ss;
-	ss << Instruction("MOV", "R0", toString(value));
-	context.resultRegister = std::string("R0");
+	ss << value;
 	return ss.str();
 }
 
-std::string NDouble::codeGen(CodeGenContext& context) {
-	std::stringstream ss;
-	ss << Instruction("MOV", "F0", toString(value));
-	context.resultRegister = "F0";
-	return ss.str();
+ValueType NInteger::getValueType() {
+	return ValueType::IntType;
+}
+void NInteger::accept(CodeGenContext& context) {
+	context.valueStack.push(value);
 }
 
-std::string NString::codeGen(CodeGenContext& context) {
-
+void NDouble::accept(CodeGenContext& context) {
+	context.valueStack.push(value);
 }
 
-std::string NIdentifier::codeGen(CodeGenContext& context) {
-
-}
-
-std::string NMethodCall::codeGen(CodeGenContext& context) {
+void NIdentifier::accept(CodeGenContext& context) {
 
 }
 
-std::string NBinaryOperator::codeGen(CodeGenContext& context) {
+void NMethodCall::accept(CodeGenContext& context) {
 
 }
 
-std::string NAssignment::codeGen(CodeGenContext& context) {
-	std::stringstream ss;
+void NBinaryOperator::accept(CodeGenContext& context) {
+
+	lhs.accept(context);
+	rhs.accept(context);
+
+	double lhsValue = context.valueStack.top();
+	context.valueStack.pop();
+
+	double rhsValue = context.valueStack.top();
+	context.valueStack.pop();
+
+	switch (op) {
+	case token::TPLUS:
+		context.valueStack.push(lhsValue + rhsValue);
+		break;
+	case token::TMINUS:
+		context.valueStack.push(lhsValue - rhsValue);
+		break;
+	case token::TMUL:
+		context.valueStack.push(lhsValue * rhsValue);
+		break;
+	case token::TDIV:
+		context.valueStack.push(lhsValue / rhsValue);
+
+		break;
+
+	}
+
+}
+
+void NAssignment::accept(CodeGenContext& context) {
+
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
 
 	if (context.locals.find(lhs.name) == std::end(context.locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
-	ss << rhs.codeGen(context);
+	rhs.accept(context);
 
-	auto value = Instruction::memoryParam(context.locals[lhs.name]);
-	auto instruction = Instruction("MOV", value, context.resultRegister);
-	ss << instruction;
-	return ss.str();
 }
 
-std::string NBlock::codeGen(CodeGenContext& context) {
-	std::stringstream ss;
+void NBlock::accept(CodeGenContext& context) {
+
 	StatementList::const_iterator it;
 	for (it = statements.begin(); it != statements.end(); it++) {
 		std::cout << "Generating code for " << typeid(**it).name() << std::endl;
-		ss << (**it).codeGen(context);
+		(**it).accept(context);
 	}
-	return ss.str();
+
 }
 
-std::string NExpressionStatement::codeGen(CodeGenContext& context) {
-	std::stringstream ss;
-	ss << expression.codeGen(context);
-	return ss.str();
+void NExpressionStatement::accept(CodeGenContext& context) {
+	expression.accept(context);
 }
 
-std::string NVariableDeclaration::codeGen(CodeGenContext& context) {
+void NVariableDeclaration::accept(CodeGenContext& context) {
 	std::stringstream ss;
 	std::cout << "Creating variable declaration " << type.name << " " << id.name
 			<< std::endl;
@@ -100,12 +138,12 @@ std::string NVariableDeclaration::codeGen(CodeGenContext& context) {
 
 	if (assignmentExpression != nullptr) {
 		NAssignment assn(id, *assignmentExpression);
-		ss << assn.codeGen(context);
+		assn.accept(context);
 	}
-	return ss.str();
+
 }
 
-std::string NFunctionDeclaration::codeGen(CodeGenContext& context) {
+void NFunctionDeclaration::accept(CodeGenContext& context) {
 
 }
 

@@ -26,7 +26,7 @@ typedef PSLang::Parser::token token;
 %%
 
 [ \t\n]                   ;
-[\n]					return TOKEN(TENDLINE);
+
 "for"					return TOKEN(TFOR);
 "if"					return TOKEN(TIF);
 "while"					return TOKEN(TWHILE);
@@ -46,10 +46,11 @@ typedef PSLang::Parser::token token;
 "}"                     return TOKEN(TRBRACE);
 "."                     return TOKEN(TDOT);
 ","                     return TOKEN(TCOMMA);
-"+"                     return TOKEN(TPLUS);
-"-"                     return TOKEN(TMINUS);
 "*"                     return TOKEN(TMUL);
 "/"                     return TOKEN(TDIV);
+"+"                     return TOKEN(TPLUS);
+"-"                     return TOKEN(TMINUS);
+";"					return TOKEN(TSEMICOLON);
 
 <<EOF>> {
 			yyterminate();
@@ -57,3 +58,5 @@ typedef PSLang::Parser::token token;
 .    ;
 
 %%
+
+//

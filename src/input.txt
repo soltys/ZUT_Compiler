@@ -1,3 +1,2 @@
-int forobar = 123
-float bike = 4.2
-forobar = 3
+int forobar = 5 + 10 + 2 * 7;
+

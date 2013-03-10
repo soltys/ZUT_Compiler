@@ -8,6 +8,7 @@
 #ifndef NODE_H_
 #define NODE_H_
 #include <iostream>
+#include <sstream>
 #include <ostream>
 #include <vector>
 namespace PSLang {
@@ -19,60 +20,85 @@ class NVariableDeclaration;
 typedef std::vector<NStatement*> StatementList;
 typedef std::vector<NExpression*> ExpressionList;
 typedef std::vector<NVariableDeclaration*> VariableList;
-
+enum ValueType {
+	IntType, DoubleType
+};
 class Node {
 public:
-	Node(){}
+	Node() {
+	}
 	virtual ~Node() {
 	}
-	virtual std::string codeGen(CodeGenContext& context) =0;
+	virtual void accept(CodeGenContext& context) =0;
 
 };
 
 class NExpression: public Node {
 public:
-	virtual std::string codeGen(CodeGenContext& context) =0;
+	virtual void accept(CodeGenContext& context) =0;
 };
 
 class NStatement: public Node {
 public:
-	virtual std::string codeGen(CodeGenContext& context) =0;
+	virtual void accept(CodeGenContext& context) =0;
 };
 
-class NInteger: public NExpression {
+class NValue: public NExpression {
+public:
+	virtual void accept(CodeGenContext& context) {
+	}
+	virtual std::string getStringValue() {
+	}
+	virtual double getValue() {
+	}
+	virtual ValueType getValueType() {
+	}
+};
+
+class NInteger: public NValue {
 public:
 	long long value;
 	NInteger(long long value) :
 			value(value) {
 	}
-	virtual std::string codeGen(CodeGenContext& context);
+
+	virtual void accept(CodeGenContext& context);
+	virtual std::string getStringValue();
+	virtual double getValue() {
+		return value;
+	}
+	virtual ValueType getValueType();
 };
 
-class NDouble: public NExpression {
+class NDouble: public NValue {
 public:
 	double value;
 	NDouble(double value) :
 			value(value) {
 	}
-	virtual std::string codeGen(CodeGenContext& context);
-};
-
-class NString: public NExpression {
-public:
-	std::string value;
-	NString(const std::string& value) :
-			value(value) {
+	virtual void accept(CodeGenContext& context);
+	virtual std::string getStringValue() {
+		std::stringstream ss;
+		ss << value;
+		return ss.str();
 	}
-	virtual std::string codeGen(CodeGenContext& context);
+
+	virtual ValueType getValueType() {
+		return ValueType::DoubleType;
+	}
+
+	virtual double getValue() {
+		return value;
+	}
 };
 
 class NIdentifier: public NExpression {
 public:
 	std::string name;
-	NIdentifier(const std::string& name) :
+	NIdentifier(const std::string & name) :
 			name(name) {
 	}
-	virtual std::string codeGen(CodeGenContext& context);
+	virtual void accept(CodeGenContext& context);
 };
 
 class NMethodCall: public NExpression {
@@ -86,7 +112,7 @@ public:
 	NMethodCall(const NIdentifier& id) :
 			id(id) {
 	}
-	virtual std::string codeGen(CodeGenContext& context);
+	virtual void accept(CodeGenContext& context);
 };
 
 class NBinaryOperator: public NExpression {
@@ -97,53 +123,63 @@ public:
 	NBinaryOperator(NExpression& lhs, int op, NExpression& rhs) :
 			lhs(lhs), op(op), rhs(rhs) {
 	}
-	virtual std::string codeGen(CodeGenContext& context);
+	virtual void accept(CodeGenContext& context);
 };
 
-class NAssignment:public NExpression{
+class NAssignment: public NExpression {
 public:
 	NIdentifier& lhs;
 	NExpression& rhs;
-	NAssignment(NIdentifier& lhs, NExpression& rhs):lhs(lhs),rhs(rhs){}
-	virtual std::string codeGen(CodeGenContext& context);
+	NAssignment(NIdentifier& lhs, NExpression& rhs) :
+			lhs(lhs), rhs(rhs) {
+	}
+	virtual void accept(CodeGenContext& context);
 };
 
-class NBlock:public NExpression{
+class NBlock: public NExpression {
 public:
 	StatementList statements;
-	NBlock(){}
-	virtual std::string codeGen(CodeGenContext& context);
+	NBlock() {
+	}
+	virtual void accept(CodeGenContext& context);
 };
 
-class NExpressionStatement:public NStatement{
+class NExpressionStatement: public NStatement {
 public:
 	NExpression& expression;
-	NExpressionStatement(NExpression& expression):expression(expression){}
-	virtual std::string codeGen(CodeGenContext& context);
+	NExpressionStatement(NExpression& expression) :
+			expression(expression) {
+	}
+	virtual void accept(CodeGenContext& context);
 };
 
-class NVariableDeclaration: public NStatement{
+class NVariableDeclaration: public NStatement {
 public:
 	const NIdentifier& type;
 	NIdentifier& id;
 	NExpression* assignmentExpression;
-	NVariableDeclaration(const NIdentifier& type, NIdentifier& id):
-		type(type), id(id),assignmentExpression(nullptr){}
-	NVariableDeclaration(const NIdentifier& type, NIdentifier& id, NExpression* assignmentExpression):
-			type(type), id(id),assignmentExpression(assignmentExpression){}
-	virtual std::string codeGen(CodeGenContext& context);
+	NVariableDeclaration(const NIdentifier& type, NIdentifier& id) :
+			type(type), id(id), assignmentExpression(nullptr) {
+	}
+	NVariableDeclaration(const NIdentifier& type, NIdentifier& id,
+			NExpression* assignmentExpression) :
+			type(type), id(id), assignmentExpression(assignmentExpression) {
+	}
+	virtual void accept(CodeGenContext& context);
 
 };
 
-class NFunctionDeclaration:public NStatement{
+class NFunctionDeclaration: public NStatement {
 public:
 	const NIdentifier& type;
 	const NIdentifier& id;
 	VariableList arguments;
 	NBlock& block;
-	NFunctionDeclaration(const NIdentifier& type, const NIdentifier& id, const VariableList&arguments, NBlock& block):
-		type(type), id(id), arguments(arguments),block(block){}
-	virtual std::string codeGen(CodeGenContext& context);
+	NFunctionDeclaration(const NIdentifier& type, const NIdentifier& id,
+			const VariableList&arguments, NBlock& block) :
+			type(type), id(id), arguments(arguments), block(block) {
+	}
+	virtual void accept(CodeGenContext& context);
 };
 
 } // END NAMESPACE PSLang

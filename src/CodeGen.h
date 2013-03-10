@@ -7,9 +7,12 @@
 
 #ifndef CODEGEN_H_
 #define CODEGEN_H_
+#include "Node.h"
+#include "Instruction.h"
 #include <fstream>
 #include <stack>
 #include <map>
+#include <vector>
 namespace PSLang{
 class NBlock;
 
@@ -18,12 +21,15 @@ class CodeGenContext {
 public:
 	std::ofstream outputStream;
 	CodeGenContext():outputStream("app.asm"){
+
 	}
 
 	std::string resultRegister;
-	void  generateCode(NBlock& root);
-	void foo(){}
+	void generateCode(NBlock& root);
+	double lastValue;
     std::map<std::string, int> locals;
+    std::stack<double> valueStack;
+    std::vector<PSLang::Instruction> programInstructions;
 };
 }
 #endif /* CODEGEN_H_ */
