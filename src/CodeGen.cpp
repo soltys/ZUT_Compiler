@@ -3,7 +3,9 @@
 #include <stdexcept>
 #include "Node.h"
 #include "Instruction.h"
+#include "Variable.h"
 #include "CodeGen.h"
+
 #include "parser.hh"
 #include <algorithm>
 namespace PSLang {
@@ -99,11 +101,19 @@ void NBinaryOperator::accept(CodeGenContext& context) {
 void NAssignment::accept(CodeGenContext& context) {
 
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
-
+	PSLang::Variable var = context.locals.find(lhs.name)->second;
 	if (context.locals.find(lhs.name) == std::end(context.locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
 	rhs.accept(context);
+
+	double val = context.valueStack.top();
+	context.valueStack.pop();
+	if(var.type == VariableType::Int)
+	{
+		context.programInstructions.push_back(Instruction("MOV","R0",toString(val)));
+		context.programInstructions.push_back(Instruction("MOV","#" + toString(var.memoryOffset),"F0"));
+	}
 
 }
 
@@ -111,7 +121,7 @@ void NBlock::accept(CodeGenContext& context) {
 
 	StatementList::const_iterator it;
 	for (it = statements.begin(); it != statements.end(); it++) {
-		std::cout << "Generating code for " << typeid(**it).name() << std::endl;
+		//std::cout << "Generating code for " << typeid(**it).name() << std::endl;
 		(**it).accept(context);
 	}
 
@@ -130,10 +140,15 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 		int maxMemoryIndex = 0;
 		for (auto it = std::begin(context.locals);
 				it != std::end(context.locals); it++) {
-			maxMemoryIndex = std::max(maxMemoryIndex, it->second);
+			maxMemoryIndex = std::max(maxMemoryIndex, it->second.memoryOffset);
+		}
+		if(type.name == "int")
+		{
+			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,VariableType::Int)));
+		}else{
+			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,VariableType::Float)));
 		}
 
-		context.locals.insert(std::make_pair(id.name, ++maxMemoryIndex));
 	}
 
 	if (assignmentExpression != nullptr) {

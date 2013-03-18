@@ -8,6 +8,7 @@
 #ifndef CODEGEN_H_
 #define CODEGEN_H_
 #include "Node.h"
+#include "Variable.h"
 #include "Instruction.h"
 #include <fstream>
 #include <stack>
@@ -26,10 +27,10 @@ public:
 
 	std::string resultRegister;
 	void generateCode(NBlock& root);
-	double lastValue;
-    std::map<std::string, int> locals;
+    std::map<std::string, PSLang::Variable> locals;
     std::stack<double> valueStack;
     std::vector<PSLang::Instruction> programInstructions;
+
 };
 }
 #endif /* CODEGEN_H_ */

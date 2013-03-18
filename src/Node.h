@@ -47,12 +47,14 @@ class NValue: public NExpression {
 public:
 	virtual void accept(CodeGenContext& context) {
 	}
+#pragma GCC diagnostic ignored "-Wreturn-type"
 	virtual std::string getStringValue() {
 	}
 	virtual double getValue() {
 	}
 	virtual ValueType getValueType() {
 	}
+#pragma GCC diagnostic pop
 };
 
 class NInteger: public NValue {

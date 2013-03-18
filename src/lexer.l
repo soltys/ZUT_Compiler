@@ -30,6 +30,8 @@ typedef PSLang::Parser::token token;
 "for"					return TOKEN(TFOR);
 "if"					return TOKEN(TIF);
 "while"					return TOKEN(TWHILE);
+"to"					return TOKEN(TTO);
+
 [a-zA-Z_][a-zA-Z0-9_]*  SAVE_TOKEN; return token::TIDENTIFIER;
 [0-9]+\.[0-9]*          SAVE_TOKEN; return token::TDOUBLE;
 [0-9]+                  SAVE_TOKEN; return token::TINTEGER;
