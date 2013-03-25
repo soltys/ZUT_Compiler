@@ -12,7 +12,7 @@ public:
 	Driver() :
 			programBlock(nullptr),parser(nullptr), scanner(nullptr), _isVerbose(false){
 	}
-	;
+
 	virtual ~Driver();
 	void compile(const std::string& filename, const std::string& output);
 

@@ -7,6 +7,7 @@ lib/
 *.hh
 *.asm
 parser.output
+*~
 
 #ignore eclipse files
 .cproject

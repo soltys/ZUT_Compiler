@@ -9,9 +9,16 @@ static void printHelp() {
 }
 
 int main(const int argc, const char** argv) {
-	if (argc == 1 || argc > 3) {
+
+	std::string inputfile = "input.psl";
+
+	if (argc > 3) {
 		printHelp();
 		return EXIT_FAILURE;
+	}
+
+	if(argc == 2){
+		inputfile = argv[1];
 	}
 
 	std::string outputFilename = "app.asm";
@@ -21,7 +28,7 @@ int main(const int argc, const char** argv) {
 
 	PSLang::Driver driver;
 	driver.setVerbose(true);
-	driver.compile(std::string(argv[1]), outputFilename);
+	driver.compile(inputfile, outputFilename);
 
 	return EXIT_SUCCESS;
 }

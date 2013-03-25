@@ -5,10 +5,12 @@ LEX = flex
 BISON = bison
 EXE = pslang
 RM = rm -f
-OBJS = lexer.o main.o Variable.o Driver.o CodeGen.o  parser.o Instruction.o 
+OBJS =  main.o  Driver.o CodeGen.o Instruction.o Symbol.o
+GENOBJS = lexer.o parser.o
+ALLOBJS = $(OBJS) $(GENOBJS)
 all: pslang
 
-pslang: $(OBJS)
+pslang: $(ALLOBJS)
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $(EXE)
 
 lexer: lexer.o
@@ -22,14 +24,10 @@ parser.o parser.hh: parser.y Node.h
 	bison -v $<
 	$(CXX) $(CXXFLAGS) -c parser.cc -o parser.o
 
-main.o: main.cpp
+$(OBJS): %.o: %.cpp $(GENOBJS)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-Driver.o: Driver.cpp Driver.h
 
-CodeGen.o :CodeGen.cpp Node.h
-
-Instruction.o: Instruction.cpp Instruction.h
-Variable.o: Variable.cpp Variable.h
 .PHONY: clean
 clean:
 	$(RM) *.hh 

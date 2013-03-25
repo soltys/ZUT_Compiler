@@ -8,7 +8,7 @@
 #ifndef CODEGEN_H_
 #define CODEGEN_H_
 #include "Node.h"
-#include "Variable.h"
+#include "Symbol.h"
 #include "Instruction.h"
 #include <fstream>
 #include <stack>

@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include "Node.h"
 #include "Instruction.h"
-#include "Variable.h"
+#include "Symbol.h"
 #include "CodeGen.h"
 
 #include "parser.hh"
@@ -109,7 +109,7 @@ void NAssignment::accept(CodeGenContext& context) {
 
 	double val = context.valueStack.top();
 	context.valueStack.pop();
-	if(var.type == VariableType::Int)
+	if(var.type == SymbolType::Int)
 	{
 		context.programInstructions.push_back(Instruction("MOV","R0",toString(val)));
 		context.programInstructions.push_back(Instruction("MOV","#" + toString(var.memoryOffset),"F0"));
@@ -144,9 +144,9 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 		}
 		if(type.name == "int")
 		{
-			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,VariableType::Int)));
+			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,SymbolType::Int)));
 		}else{
-			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,VariableType::Float)));
+			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,SymbolType::Float)));
 		}
 
 	}
