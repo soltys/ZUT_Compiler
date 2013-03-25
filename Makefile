@@ -6,6 +6,7 @@ all: pslang
 
 pslang:
 	$(MAKE) -C $(SRCDIR)
+	mkdir -p $(BINDIR)
 	$(CP) $(SRCDIR)/$@ $(BINDIR)/$@
 
 clean:

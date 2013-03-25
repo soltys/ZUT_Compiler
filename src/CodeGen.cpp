@@ -5,16 +5,16 @@
 #include "Instruction.h"
 #include "Symbol.h"
 #include "CodeGen.h"
-
+#include "Utils.hpp"
 #include "parser.hh"
 #include <algorithm>
 namespace PSLang {
 typedef PSLang::Parser::token token;
+
 std::ostream& operator <<(std::ostream& o, const Instruction& a) {
 	o << a.instruction << std::endl;
 	return o;
 }
-
 int getIndexFirstFalse(std::vector<bool>& vec) {
 	int i = 0;
 	for (auto it = std::begin(vec); it != std::end(vec); it++, i++) {
@@ -25,12 +25,7 @@ int getIndexFirstFalse(std::vector<bool>& vec) {
 	return -1;
 }
 
-template<class T>
-std::string toString(T a) {
-	std::stringstream out;
-	out << a;
-	return out.str();
-}
+
 
 void CodeGenContext::generateCode(NBlock &root) {
 	std::cout << "Generating code...\n";
@@ -111,8 +106,8 @@ void NAssignment::accept(CodeGenContext& context) {
 	context.valueStack.pop();
 	if(var.type == SymbolType::Int)
 	{
-		context.programInstructions.push_back(Instruction("MOV","R0",toString(val)));
-		context.programInstructions.push_back(Instruction("MOV","#" + toString(var.memoryOffset),"F0"));
+		context.programInstructions.push_back(Instruction("MOV","R0",PSLang::toString(val)));
+		context.programInstructions.push_back(Instruction("MOV","#" + PSLang::toString(var.offset),"F0"));
 	}
 
 }
@@ -140,7 +135,7 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 		int maxMemoryIndex = 0;
 		for (auto it = std::begin(context.locals);
 				it != std::end(context.locals); it++) {
-			maxMemoryIndex = std::max(maxMemoryIndex, it->second.memoryOffset);
+			maxMemoryIndex = std::max(maxMemoryIndex, it->second.offset);
 		}
 		if(type.name == "int")
 		{

@@ -78,12 +78,6 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %type <block> program stmts block
 %type <stmt> stmt var_decl func_decl
 
-
-
-
-
-
-
 %start program
 
 %%
