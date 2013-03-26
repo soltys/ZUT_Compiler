@@ -14,23 +14,29 @@
 #include <stack>
 #include <map>
 #include <vector>
+#include <memory>
 namespace PSLang{
 class NBlock;
 
 class CodeGenContext {
 
+	int _temporaryVariableCounter;
 public:
 	std::ofstream outputStream;
-	CodeGenContext():outputStream("app.asm"){
+	CodeGenContext():_temporaryVariableCounter(0),outputStream("app.asm"){
 
 	}
-
-	std::string resultRegister;
+	PSLang::Variable createVariable(std::string& name,PSLang::SymbolType type,bool isTemporary = false);
+	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
 	void generateCode(NBlock& root);
+	std::string resultRegister;
     std::map<std::string, PSLang::Variable> locals;
-    std::stack<double> valueStack;
+    std::stack<std::shared_ptr<PSLang::Symbol>> valueStack;
     std::vector<PSLang::Instruction> programInstructions;
 
+    virtual ~CodeGenContext(){
+
+    }
 };
 }
 #endif /* CODEGEN_H_ */

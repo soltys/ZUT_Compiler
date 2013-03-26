@@ -15,28 +15,53 @@ std::ostream& operator <<(std::ostream& o, const Instruction& a) {
 	o << a.instruction << std::endl;
 	return o;
 }
-int getIndexFirstFalse(std::vector<bool>& vec) {
-	int i = 0;
-	for (auto it = std::begin(vec); it != std::end(vec); it++, i++) {
-		if (!*it) {
-			return i;
+
+PSLang::Variable CodeGenContext::createVariable(std::string & name,
+		PSLang::SymbolType type, bool isTemporary) {
+
+	if (locals.find(name) == std::end(locals)) {
+		int maxMemoryIndex = -1;
+		for (auto it = std::begin(locals); it != std::end(locals); it++) {
+			maxMemoryIndex = std::max(maxMemoryIndex, it->second.offset);
 		}
+
+		if (isTemporary) {
+			locals.insert(
+					std::make_pair(name,
+							TemporaryVariable(++maxMemoryIndex, type)));
+		} else {
+			locals.insert(
+					std::make_pair(name, Variable(++maxMemoryIndex, type)));
+		}
+
+		return Variable(maxMemoryIndex, type);
+	} else {
+		throw std::runtime_error(
+				"Variable already exists!, could not create new one.");
 	}
-	return -1;
+
 }
-
-
-
+PSLang::Variable CodeGenContext::createTemporaryVariable(
+		PSLang::SymbolType type) {
+	_temporaryVariableCounter++;
+	std::string proposeName = std::string(
+			"__temporary" + toString(_temporaryVariableCounter));
+	return createVariable(proposeName, type, true);
+}
 void CodeGenContext::generateCode(NBlock &root) {
 	std::cout << "Generating code...\n";
 	root.accept(*this);
-	for (auto it = programInstructions.begin();
-			it != programInstructions.end();
+	for (auto it = programInstructions.begin(); it != programInstructions.end();
 			it++) {
 		outputStream << *it;
 	}
 
 	std::cout << "Code is generated.\n";
+	std::cout << "Number of instructions: "<< Instruction::_instuctionCounter << std::endl;
+	std::cout << "-------------- Local variables ---------" << std::endl;
+	for (auto it = locals.begin(); it != locals.end();	it++) {
+			std::cout << it->first<< "\t\t" << it->second.getValue() <<std::endl;
+		}
 }
 std::string NInteger::getStringValue() {
 	std::stringstream ss;
@@ -48,11 +73,13 @@ ValueType NInteger::getValueType() {
 	return ValueType::IntType;
 }
 void NInteger::accept(CodeGenContext& context) {
-	context.valueStack.push(value);
+	context.valueStack.push(
+			std::shared_ptr<IntConstant>(new IntConstant(value)));
 }
 
 void NDouble::accept(CodeGenContext& context) {
-	context.valueStack.push(value);
+	context.valueStack.push(
+			std::shared_ptr<IntConstant>(new IntConstant(value)));
 }
 
 void NIdentifier::accept(CodeGenContext& context) {
@@ -64,32 +91,38 @@ void NMethodCall::accept(CodeGenContext& context) {
 }
 
 void NBinaryOperator::accept(CodeGenContext& context) {
-
-	lhs.accept(context);
 	rhs.accept(context);
+	lhs.accept(context);
 
-	double lhsValue = context.valueStack.top();
+	std::shared_ptr<Symbol> lhsValue = context.valueStack.top();
+	context.programInstructions.push_back(
+			Instruction("MOV", "R1", lhsValue->getValue()));
 	context.valueStack.pop();
 
-	double rhsValue = context.valueStack.top();
+	std::shared_ptr<Symbol> rhsValue = context.valueStack.top();
+	context.programInstructions.push_back(
+			Instruction("MOV", "R2", rhsValue->getValue()));
 	context.valueStack.pop();
 
 	switch (op) {
 	case token::TPLUS:
-		context.valueStack.push(lhsValue + rhsValue);
+		context.programInstructions.push_back(Instruction("ADD", "R1", "R2"));
 		break;
 	case token::TMINUS:
-		context.valueStack.push(lhsValue - rhsValue);
+		context.programInstructions.push_back(Instruction("SUB", "R1", "R2"));
 		break;
 	case token::TMUL:
-		context.valueStack.push(lhsValue * rhsValue);
+		context.programInstructions.push_back(Instruction("MUL", "R1", "R2"));
 		break;
 	case token::TDIV:
-		context.valueStack.push(lhsValue / rhsValue);
-
+		context.programInstructions.push_back(Instruction("DIV", "R1", "R2"));
 		break;
 
 	}
+	PSLang::Variable var = context.createTemporaryVariable(Int);
+	context.programInstructions.push_back(
+			Instruction("MOV", var.getValue(), "R1"));
+	context.valueStack.push(std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 
 }
 
@@ -102,21 +135,19 @@ void NAssignment::accept(CodeGenContext& context) {
 	}
 	rhs.accept(context);
 
-	double val = context.valueStack.top();
-	context.valueStack.pop();
-	if(var.type == SymbolType::Int)
-	{
-		context.programInstructions.push_back(Instruction("MOV","R0",PSLang::toString(val)));
-		context.programInstructions.push_back(Instruction("MOV","#" + PSLang::toString(var.offset),"F0"));
-	}
 
+
+	std::shared_ptr<Symbol> rhsValue = context.valueStack.top();
+	context.programInstructions.push_back(
+			Instruction("MOV", var.getValue(), rhsValue->getValue()));
+	context.valueStack.pop();
 }
 
 void NBlock::accept(CodeGenContext& context) {
 
 	StatementList::const_iterator it;
 	for (it = statements.begin(); it != statements.end(); it++) {
-		//std::cout << "Generating code for " << typeid(**it).name() << std::endl;
+		std::cout << "Generating code for " << typeid(**it).name() << std::endl;
 		(**it).accept(context);
 	}
 
@@ -131,19 +162,10 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 	std::cout << "Creating variable declaration " << type.name << " " << id.name
 			<< std::endl;
 
-	if (context.locals.find(id.name) == std::end(context.locals)) {
-		int maxMemoryIndex = 0;
-		for (auto it = std::begin(context.locals);
-				it != std::end(context.locals); it++) {
-			maxMemoryIndex = std::max(maxMemoryIndex, it->second.offset);
-		}
-		if(type.name == "int")
-		{
-			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,SymbolType::Int)));
-		}else{
-			context.locals.insert(std::make_pair(id.name, Variable(++maxMemoryIndex,SymbolType::Float)));
-		}
-
+	if (type.name == "int") {
+		context.createVariable(id.name, Int);
+	} else {
+		context.createVariable(id.name, Float);
 	}
 
 	if (assignmentExpression != nullptr) {

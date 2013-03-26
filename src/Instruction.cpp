@@ -8,7 +8,7 @@
 #include "Instruction.h"
 
 namespace PSLang {
-int Instruction::_instuctionCounter;
+int Instruction::_instuctionCounter = 0;
 
 int Instruction::getInstuctionNumber()
 {

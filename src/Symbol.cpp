@@ -12,10 +12,7 @@ Symbol::Symbol(const SymbolType type) :
 		type(type) {
 
 }
-Symbol::Symbol() :
-		type(None) {
 
-}
 Symbol::~Symbol() {
 
 }
@@ -26,16 +23,24 @@ Variable::Variable(const int offset, const SymbolType type) :
 Variable::Variable(const int offset, const int size, const SymbolType type) :
 		Symbol(type), offset(offset), size(size) {
 }
-
-template<class T>
-Constant<T>::Constant(T value, const SymbolType type) :
-		Symbol(type),value(value) {
+bool Variable::isTemporaryValue()
+{
+	return false;
 }
 
-template<class T>
-std::string Constant<T>::getValue() {
-	return toString(value);
+TemporaryVariable::TemporaryVariable(int offset, SymbolType type):Variable(offset,type){}
+TemporaryVariable::TemporaryVariable(int offset, int size, SymbolType type):Variable(offset,size,type){}
+bool TemporaryVariable::isTemporaryValue(){
+	return true;
 }
+
+
+
+IntConstant::IntConstant(long long value) :
+		Symbol(Int),value(value) {
+}
+
+
 
 std::string Variable::getValue() {
 	return "#" + toString(offset);

@@ -5,7 +5,7 @@ LEX = flex
 BISON = bison
 EXE = pslang
 RM = rm -f
-OBJS =  main.o  Driver.o CodeGen.o Instruction.o Symbol.o
+OBJS =  main.o  Driver.o  Symbol.o CodeGen.o Instruction.o
 GENOBJS = lexer.o parser.o
 ALLOBJS = $(OBJS) $(GENOBJS)
 all: pslang
@@ -24,7 +24,7 @@ parser.o parser.hh: parser.y Node.h
 	bison -v $<
 	$(CXX) $(CXXFLAGS) -c parser.cc -o parser.o
 
-$(OBJS): %.o: %.cpp $(GENOBJS)
+$(OBJS): %.o: %.cpp %.h $(GENOBJS)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 
@@ -34,6 +34,7 @@ clean:
 	$(RM) *.cc
 	$(RM) parser.output
 	$(RM) *.o
+	$(RM) *~
 	$(RM) $(EXE)
 
 

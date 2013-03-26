@@ -2,11 +2,8 @@
 #include <cstdlib>
 #include <string>
 #include "Driver.h"
+#include "main.h"
 
-static void printHelp() {
-	std::cout << "PSLang usage:" << std::endl;
-	std::cout << "pslang input [output]" << std::endl;
-}
 
 int main(const int argc, const char** argv) {
 
@@ -33,3 +30,7 @@ int main(const int argc, const char** argv) {
 	return EXIT_SUCCESS;
 }
 
+static void printHelp() {
+	std::cout << "PSLang usage:" << std::endl;
+	std::cout << "pslang input [output]" << std::endl;
+}

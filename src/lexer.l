@@ -2,7 +2,6 @@
 #include <cstdio>
 #include <iostream>
 #include "Scanner.hpp"
-using namespace std;
 
 
 #include "parser.hh"
