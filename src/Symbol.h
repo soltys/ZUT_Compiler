@@ -49,5 +49,15 @@ public:
 	virtual ~IntConstant(){}
 };
 
+class FloatConstant: public Symbol{
+	double value;
+public:
+	FloatConstant(double value);
+	virtual std::string getValue(){
+		return toString (value);
+	}
+	virtual ~FloatConstant(){}
+};
+
 } /* namespace PSLang */
 #endif /* SYMBOL_H */

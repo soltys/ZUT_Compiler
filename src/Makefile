@@ -5,7 +5,7 @@ LEX = flex
 BISON = bison
 EXE = pslang
 RM = rm -f
-OBJS =  main.o  Driver.o  Symbol.o CodeGen.o Instruction.o
+OBJS =  main.o  Driver.o  Symbol.o Node.o CodeGen.o Instruction.o 
 GENOBJS = lexer.o parser.o
 ALLOBJS = $(OBJS) $(GENOBJS)
 all: pslang

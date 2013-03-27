@@ -39,7 +39,8 @@ bool TemporaryVariable::isTemporaryValue(){
 IntConstant::IntConstant(long long value) :
 		Symbol(Int),value(value) {
 }
-
+FloatConstant::FloatConstant(double value):
+		Symbol(Float), value(value){}
 
 
 std::string Variable::getValue() {

@@ -43,21 +43,8 @@ public:
 	virtual void accept(CodeGenContext& context) =0;
 };
 
-class NValue: public NExpression {
-public:
-	virtual void accept(CodeGenContext& context) {
-	}
-#pragma GCC diagnostic ignored "-Wreturn-type"
-	virtual std::string getStringValue() {
-	}
-	virtual double getValue() {
-	}
-	virtual ValueType getValueType() {
-	}
-#pragma GCC diagnostic pop
-};
 
-class NInteger: public NValue {
+class NInteger: public NExpression {
 public:
 	long long value;
 	NInteger(long long value) :
@@ -65,33 +52,17 @@ public:
 	}
 
 	virtual void accept(CodeGenContext& context);
-	virtual std::string getStringValue();
-	virtual double getValue() {
-		return value;
-	}
-	virtual ValueType getValueType();
+
 };
 
-class NDouble: public NValue {
+class NDouble: public NExpression {
 public:
 	double value;
 	NDouble(double value) :
 			value(value) {
 	}
 	virtual void accept(CodeGenContext& context);
-	virtual std::string getStringValue() {
-		std::stringstream ss;
-		ss << value;
-		return ss.str();
-	}
 
-	virtual ValueType getValueType() {
-		return ValueType::DoubleType;
-	}
-
-	virtual double getValue() {
-		return value;
-	}
 };
 
 class NIdentifier: public NExpression {
