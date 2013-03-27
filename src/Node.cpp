@@ -118,4 +118,12 @@ void NFunctionDeclaration::accept(CodeGenContext& context) {
 
 }
 
+void NIfStatement::accept(CodeGenContext& context){
+	std::cout <<"Generating code for if statement" <<std::endl;
+}
+
+void NWhileStatement::accept(CodeGenContext& context){
+	std::cout <<"Generating code for if statement" <<std::endl;
+}
+
 }

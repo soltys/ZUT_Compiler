@@ -15,7 +15,9 @@
         class NExpression;
         class NStatement;
         class NIdentifier;
-        class NVariableDeclaration;        
+        class NVariableDeclaration;
+        class NIfStatement;        
+        class NWhileStatement;
     }
 }
 
@@ -76,7 +78,7 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %type <varvec> func_decl_args
 %type <exprvec> call_args
 %type <block> program stmts block
-%type <stmt> stmt var_decl func_decl
+%type <stmt> stmt var_decl func_decl if_stmt while_stmt
 
 %start program
 
@@ -95,6 +97,8 @@ stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }
 stmt : var_decl  TSEMICOLON
      | func_decl TSEMICOLON       
      | expr TSEMICOLON { $$ = new NExpressionStatement(*$1); }
+     | if_stmt
+     | while_stmt
      ;
 
 block : TLBRACE stmts TRBRACE { $$ = $2; }
@@ -131,11 +135,18 @@ expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }
      | TLPAREN expr TRPAREN { $$ = $2; }
      | numeric
      ;
+
+			
 	    
 call_args : /*blank*/  { $$ = new ExpressionList(); }
           | expr { $$ = new ExpressionList(); $$->push_back($1); }
           | call_args TCOMMA expr  { $1->push_back($3); }
           ;
+          
+if_stmt : TIF TLPAREN expr TRPAREN block { $$ = new NIfStatement(*$3,*$5);}
+		;
+while_stmt: TWHILE TLPAREN expr TRPAREN block {$$ = new NWhileStatement(*$3,*$5);}
+		  ;
 
 %%
 

@@ -155,6 +155,27 @@ public:
 	virtual void accept(CodeGenContext& context);
 };
 
+class NIfStatement:public NStatement{
+	NExpression& boolExpr;
+	NBlock& block;
+public:
+	NIfStatement(NExpression& boolExpr, NBlock& block):
+		boolExpr(boolExpr),block(block){}
+
+	virtual void accept(CodeGenContext& context);
+};
+
+class NWhileStatement:public NStatement{
+	NExpression& boolExpr;
+	NBlock& block;
+public:
+	NWhileStatement(NExpression& boolExpr, NBlock& block):
+		boolExpr(boolExpr),block(block){}
+
+	virtual void accept(CodeGenContext& context);
+};
+
+
 } // END NAMESPACE PSLang
 
 #endif /* NODE_H_ */
