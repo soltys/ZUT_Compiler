@@ -22,6 +22,7 @@ typedef std::shared_ptr<PSLang::Variable> Variable_ptr;
 class CodeGenContext {
 
 	int _temporaryVariableCounter;
+	std::map<std::string, int> labels;
 public:
 	std::ofstream outputStream;
 	CodeGenContext() :
@@ -31,9 +32,16 @@ public:
 	PSLang::Variable createVariable(std::string& name, PSLang::SymbolType type,
 			bool isTemporary = false);
 	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
+	void clearTemporaryVariables();
+
+	void createLabel(const std::string& name, const int& value);
+	void clearLabels();
+	void swapLabels();
+
 	void generateCode(NBlock& root);
-	std::string resultRegister;
+
 	std::map<std::string, Variable_ptr> locals;
+
 	std::stack<Symbol_ptr> valueStack;
 	std::vector<PSLang::Instruction> programInstructions;
 

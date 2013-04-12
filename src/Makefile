@@ -29,6 +29,7 @@ $(OBJS): %.o: %.cpp %.h $(GENOBJS)
 
 
 .PHONY: clean
+
 clean:
 	$(RM) *.hh 
 	$(RM) *.cc

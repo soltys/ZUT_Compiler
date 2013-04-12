@@ -19,19 +19,20 @@ class Instruction {
 
 public:
 	static int _instuctionCounter;
-	std::string instruction;
+	std::string command;
+	std::string param1;
+	std::string param2;
 	int getInstuctionNumber();
 	static std::string memoryParam(int memoryIndex );
 	Instruction(const std::string& command, const std::string& param1) :
 			_instuctionNumber(Instruction::_instuctionCounter++),
-			instruction(boost::to_upper_copy(command) + std::string(" ") + param1) {
+			command(boost::to_upper_copy(command)), param1(param1)	 {
 	}
 
 	Instruction(const std::string& command, const std::string& param1, const std::string& param2) :
 			_instuctionNumber(Instruction::_instuctionCounter++),
-			instruction(boost::to_upper_copy(command) + std::string(" ") + param1 + std::string(",") + param2)
+			command(boost::to_upper_copy(command)), param1(param1), param2(param2)
 			 {
-
 	}
 };
 

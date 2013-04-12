@@ -9,54 +9,58 @@ enum SymbolType {
 };
 
 class Symbol {
-public:
+protected:
 	SymbolType type;
+public:
+
 	Symbol(const SymbolType type);
 	Symbol();
-	virtual std::string getValue(){
+	virtual std::string getValue() {
+		throw std::runtime_error("should not be called never-ever");
 		return "";
-		}
-
+	}
+	SymbolType getType();
+	std::string getTypeRegister();
 	virtual ~Symbol();
 };
 
 class Variable: public Symbol {
 public:
 	Variable(const int offset, const SymbolType type);
-	Variable(const int offset,const int size, const SymbolType type);
+	Variable(const int offset, const int size, const SymbolType type);
 	virtual std::string getValue();
 	virtual bool isTemporaryValue();
 	int offset;
 	int size;
 };
 
-
-class TemporaryVariable : public Variable{
+class TemporaryVariable: public Variable {
 public:
 	TemporaryVariable(const int offset, const SymbolType type);
-	TemporaryVariable(const int offset,const int size, const SymbolType type);
+	TemporaryVariable(const int offset, const int size, const SymbolType type);
 	virtual bool isTemporaryValue();
 };
 
-
-class IntConstant: public Symbol{
+class IntConstant: public Symbol {
 	long long value;
 public:
 	IntConstant(long long value);
 	virtual std::string getValue() {
 		return toString(value);
 	}
-	virtual ~IntConstant(){}
+	virtual ~IntConstant() {
+	}
 };
 
-class FloatConstant: public Symbol{
+class FloatConstant: public Symbol {
 	double value;
 public:
 	FloatConstant(double value);
-	virtual std::string getValue(){
-		return toString (value);
+	virtual std::string getValue() {
+		return toString(value);
 	}
-	virtual ~FloatConstant(){}
+	virtual ~FloatConstant() {
+	}
 };
 
 } /* namespace PSLang */

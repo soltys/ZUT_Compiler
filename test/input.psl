@@ -1,2 +1,5 @@
-int forobar = 5 + 10 + 2 * 7;
-int boor = 666;
+int test=0;
+if(12>=15){
+	test = 1;
+}
+

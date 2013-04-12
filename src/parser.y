@@ -69,6 +69,7 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 
 /* Operator precedence for mathematical operators */
 %right TEQUAL
+%left TCEQ TCNE TCLT TCLE TCGT TCGE 
 %left TPLUS TMINUS
 %left TMUL TDIV
 
@@ -132,6 +133,12 @@ expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }
      | expr TMINUS expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr TMUL expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr TDIV expr { $$ = new NBinaryOperator(*$1, $2, *$3); } 
+     | expr TCGT expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TCLT expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TCEQ expr { $$ = new NBinaryOperator(*$1, $2, *$3); }      
+     | expr TCNE expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TCLE expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TCGE expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | TLPAREN expr TRPAREN { $$ = $2; }
      | numeric
      ;
@@ -142,7 +149,7 @@ call_args : /*blank*/  { $$ = new ExpressionList(); }
           | expr { $$ = new ExpressionList(); $$->push_back($1); }
           | call_args TCOMMA expr  { $1->push_back($3); }
           ;
-          
+      
 if_stmt : TIF TLPAREN expr TRPAREN block { $$ = new NIfStatement(*$3,*$5);}
 		;
 while_stmt: TWHILE TLPAREN expr TRPAREN block {$$ = new NWhileStatement(*$3,*$5);}

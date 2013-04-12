@@ -1,8 +1,10 @@
 SRCDIR = src
 BINDIR = bin
+TESTDIR = test
 CP = cp -f
 RM = rm -f
-all: pslang
+EXE = pslang
+all: $(EXE) test
 
 pslang:
 	$(MAKE) -C $(SRCDIR)
@@ -12,4 +14,12 @@ pslang:
 clean:
 	$(MAKE) -C $(SRCDIR) clean
 	$(RM) bin/*
-.PHONY: pslang clean
+
+rebuild:
+	$(MAKE) clean
+	$(MAKE) all
+
+test:
+	$(MAKE) -C $(TESTDIR) all
+
+.PHONY: pslang clean rebuild test

@@ -19,12 +19,14 @@ typedef PSLang::Parser::token token;
 %option yyclass="Scanner"
 %option noyywrap
 %option c++
-
+%option yylineno
 
 
 %%
 
-[ \t\n]                   ;
+[ \t]                   ;
+
+[\n]					{yylineno++;}
 
 "for"					return TOKEN(TFOR);
 "if"					return TOKEN(TIF);
