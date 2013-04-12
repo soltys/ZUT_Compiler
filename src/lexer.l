@@ -43,6 +43,8 @@ typedef PSLang::Parser::token token;
 "<="                    return TOKEN(TCLE);
 ">"                     return TOKEN(TCGT);
 ">="                    return TOKEN(TCGE);
+"&&"					return TOKEN(TAND);
+"||"					return TOKEN(TOR);
 "("                     return TOKEN(TLPAREN);
 ")"                     return TOKEN(TRPAREN);
 "{"                     return TOKEN(TLBRACE);

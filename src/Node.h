@@ -88,6 +88,8 @@ public:
 	virtual void accept(CodeGenContext& context);
 };
 
+
+
 class NBinaryOperator: public NExpression {
 public:
 	NExpression& lhs;
@@ -97,6 +99,18 @@ public:
 			lhs(lhs), op(op), rhs(rhs) {
 	}
 	virtual void accept(CodeGenContext& context);
+};
+
+class NBooleanOperator: public NBinaryOperator {
+public:
+
+	NBooleanOperator(NExpression& lhs, int op, NExpression& rhs) :
+		NBinaryOperator(lhs, op, rhs) {
+	}
+	virtual void accept(CodeGenContext& context);
+
+	void operatorAnd(CodeGenContext& context);
+	void operatorOr(CodeGenContext& context);
 };
 
 class NAssignment: public NExpression {

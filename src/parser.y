@@ -63,12 +63,15 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %token <string> TIDENTIFIER TINTEGER TDOUBLE
 %token <token> TSEMICOLON TTO
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
+%token <token> TAND TOR
 %token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT 
 %token <token> TPLUS TMINUS TMUL TDIV
 %token <token> TFOR TIF TWHILE 
 
 /* Operator precedence for mathematical operators */
 %right TEQUAL
+%left TOR
+%left TAND
 %left TCEQ TCNE TCLT TCLE TCGT TCGE 
 %left TPLUS TMINUS
 %left TMUL TDIV
@@ -139,6 +142,8 @@ expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }
      | expr TCNE expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr TCLE expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr TCGE expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
+     | expr TAND expr { $$ = new NBooleanOperator(*$1, $2, *$3); }
+     | expr TOR expr { $$ = new NBooleanOperator(*$1, $2, *$3); }
      | TLPAREN expr TRPAREN { $$ = $2; }
      | numeric
      ;

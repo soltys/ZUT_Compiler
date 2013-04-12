@@ -107,6 +107,89 @@ void NBinaryOperator::accept(CodeGenContext& context) {
 
 }
 
+void NBooleanOperator::accept(CodeGenContext& context) {
+	rhs.accept(context);
+	lhs.accept(context);
+
+	if (op == token::TAND) {
+		operatorAnd(context);
+	} else if (op == token::TOR) {
+		operatorOr(context);
+	} else {
+		throw std::runtime_error("unsuported boolean operator");
+	}
+
+}
+
+void NBooleanOperator::operatorAnd(CodeGenContext& context) {
+	Symbol_ptr lhsValue = context.valueStack.top();
+	context.valueStack.pop();
+
+	Symbol_ptr rhsValue = context.valueStack.top();
+	context.valueStack.pop();
+
+	PSLang::SymbolType resultType =
+			lhsValue->getType() == Float || rhsValue->getType() == Float ?
+					Float : Int;
+
+	std::string registerType = resultType == Int ? "R" : "F";
+
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "1", lhsValue->getValue()));
+	context.programInstructions.push_back(
+			Instruction("JZ", toString(Instruction::_instuctionCounter + 5)));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "2", rhsValue->getValue()));
+	context.programInstructions.push_back(
+			Instruction("JZ", toString(Instruction::_instuctionCounter + 3)));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "1", "1"));
+	context.programInstructions.push_back(
+			Instruction("JMP", toString(Instruction::_instuctionCounter + 2)));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "1", "0"));
+
+	PSLang::Variable var = context.createTemporaryVariable(resultType);
+	context.programInstructions.push_back(
+			Instruction("MOV", var.getValue(), registerType + "1"));
+	context.valueStack.push(
+			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
+}
+
+void NBooleanOperator::operatorOr(CodeGenContext& context) {
+	Symbol_ptr lhsValue = context.valueStack.top();
+		context.valueStack.pop();
+
+		Symbol_ptr rhsValue = context.valueStack.top();
+		context.valueStack.pop();
+
+		PSLang::SymbolType resultType =
+				lhsValue->getType() == Float || rhsValue->getType() == Float ?
+						Float : Int;
+
+		std::string registerType = resultType == Int ? "R" : "F";
+
+		context.programInstructions.push_back(
+				Instruction("MOV", registerType + "1", lhsValue->getValue()));
+		context.programInstructions.push_back(
+				Instruction("JNZ", toString(Instruction::_instuctionCounter + 5)));
+		context.programInstructions.push_back(
+				Instruction("MOV", registerType + "2", rhsValue->getValue()));
+		context.programInstructions.push_back(
+				Instruction("JNZ", toString(Instruction::_instuctionCounter + 3)));
+		context.programInstructions.push_back(
+				Instruction("MOV", registerType + "1", "0"));
+		context.programInstructions.push_back(
+				Instruction("JMP", toString(Instruction::_instuctionCounter + 2)));
+		context.programInstructions.push_back(
+				Instruction("MOV", registerType + "1", "1"));
+
+		PSLang::Variable var = context.createTemporaryVariable(resultType);
+		context.programInstructions.push_back(
+				Instruction("MOV", var.getValue(), registerType + "1"));
+		context.valueStack.push(
+				std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
+}
 void NAssignment::accept(CodeGenContext& context) {
 
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
