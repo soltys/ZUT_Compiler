@@ -82,7 +82,7 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %type <varvec> func_decl_args
 %type <exprvec> call_args
 %type <block> program stmts block
-%type <stmt> stmt var_decl func_decl if_stmt while_stmt
+%type <stmt> stmt var_decl func_decl if_stmt while_stmt for_stmt
 
 %start program
 
@@ -103,6 +103,7 @@ stmt : var_decl  TSEMICOLON
      | expr TSEMICOLON { $$ = new NExpressionStatement(*$1); }
      | if_stmt
      | while_stmt
+     | for_stmt
      ;
 
 block : TLBRACE stmts TRBRACE { $$ = $2; }
@@ -161,6 +162,7 @@ if_stmt : TIF TLPAREN expr TRPAREN block { $$ = new NIfStatement(*$3,*$5);}
 while_stmt: TWHILE TLPAREN expr TRPAREN block {$$ = new NWhileStatement(*$3,*$5);}
 		  ;
 
+for_stmt: TFOR TLPAREN var_decl TSEMICOLON expr TSEMICOLON stmt TRPAREN block { $$ = new NForStatement(*$3,*$5,*$7,*$9);}
 %%
 
 void PSLang::Parser::error( const PSLang::Parser::location_type &l,

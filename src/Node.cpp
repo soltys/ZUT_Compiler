@@ -22,10 +22,11 @@ void NDouble::accept(CodeGenContext& context) {
 }
 
 void NIdentifier::accept(CodeGenContext& context) {
-	Variable_ptr var = context.locals.find(name)->second;
+
 	if (context.locals.find(name) == std::end(context.locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
+	Variable_ptr var = context.locals.find(name)->second;
 	context.valueStack.push(var);
 }
 
@@ -292,6 +293,27 @@ void NWhileStatement::accept(CodeGenContext& context) {
 
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 	context.createLabel(beginWhileLabel, beginWhile);
+}
+
+void NForStatement::accept(CodeGenContext& context)
+{
+	varDecl.accept(context);
+	int beginWhile = Instruction::_instuctionCounter;
+		boolExpr.accept(context);
+		Symbol_ptr var = context.valueStack.top();
+		context.programInstructions.push_back(
+				Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
+		context.valueStack.pop();
+
+		auto labelName = context.addJumpWithLabel("JZ",
+				Instruction::_instuctionCounter);
+
+		block.accept(context);
+		exprStmt.accept(context);
+		auto beginWhileLabel = context.addJumpWithLabel("JMP",	beginWhile);
+
+		context.createLabel(labelName, Instruction::_instuctionCounter);
+		context.createLabel(beginWhileLabel, beginWhile);
 }
 
 }

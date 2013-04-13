@@ -26,22 +26,22 @@ PSLang::Variable CodeGenContext::createVariable(std::string & name,
 		PSLang::SymbolType type, bool isTemporary) {
 
 	if (locals.find(name) == std::end(locals)) {
-		int maxMemoryIndex = -1;
+		int maxMemoryIndex = 0;
 		for (auto it = std::begin(locals); it != std::end(locals); it++) {
-			maxMemoryIndex = std::max(maxMemoryIndex, it->second->offset);
+			maxMemoryIndex = std::max(maxMemoryIndex, it->second->offset + it->second->size);
 		}
 
 		if (isTemporary) {
 			locals.insert(
 					std::make_pair(name,
 							Variable_ptr(
-									new TemporaryVariable(++maxMemoryIndex,
+									new TemporaryVariable(maxMemoryIndex,
 											type))));
 		} else {
 			locals.insert(
 					std::make_pair(name,
 							Variable_ptr(
-									new Variable(++maxMemoryIndex, type))));
+									new Variable(maxMemoryIndex, type))));
 		}
 
 		return Variable(maxMemoryIndex, type);

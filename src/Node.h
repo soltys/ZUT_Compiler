@@ -202,6 +202,18 @@ public:
 };
 
 
+class NForStatement:public NStatement{
+	NStatement& varDecl;
+	NExpression& boolExpr;
+	NStatement& exprStmt;
+	NBlock& block;
+public:
+	NForStatement(NStatement& varDecl,NExpression& boolExpr,NStatement& exprStmt,  NBlock& block):
+		varDecl(varDecl),boolExpr(boolExpr),exprStmt(exprStmt),block(block){}
+
+	virtual void accept(CodeGenContext& context);
+};
+
 } // END NAMESPACE PSLang
 
 #endif /* NODE_H_ */
