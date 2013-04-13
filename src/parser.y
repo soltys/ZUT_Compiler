@@ -66,7 +66,7 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %token <token> TAND TOR
 %token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT 
 %token <token> TPLUS TMINUS TMUL TDIV
-%token <token> TFOR TIF TWHILE 
+%token <token> TFOR TIF TELSE TWHILE 
 
 /* Operator precedence for mathematical operators */
 %right TEQUAL
@@ -156,6 +156,7 @@ call_args : /*blank*/  { $$ = new ExpressionList(); }
           ;
       
 if_stmt : TIF TLPAREN expr TRPAREN block { $$ = new NIfStatement(*$3,*$5);}
+		| TIF TLPAREN expr TRPAREN block TELSE block {$$ = new NIfElseStatement(*$3,*$5,*$7);}
 		;
 while_stmt: TWHILE TLPAREN expr TRPAREN block {$$ = new NWhileStatement(*$3,*$5);}
 		  ;

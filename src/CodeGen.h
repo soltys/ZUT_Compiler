@@ -34,6 +34,7 @@ public:
 	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
 	void clearTemporaryVariables();
 
+	std::string addJumpWithLabel(const std::string& command, const int& id);
 	void createLabel(const std::string& name, const int& value);
 	void clearLabels();
 	void swapLabels();

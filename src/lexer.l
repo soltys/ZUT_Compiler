@@ -30,6 +30,7 @@ typedef PSLang::Parser::token token;
 
 "for"					return TOKEN(TFOR);
 "if"					return TOKEN(TIF);
+"else"					return TOKEN(TELSE);
 "while"					return TOKEN(TWHILE);
 "to"					return TOKEN(TTO);
 

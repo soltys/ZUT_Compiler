@@ -158,37 +158,37 @@ void NBooleanOperator::operatorAnd(CodeGenContext& context) {
 
 void NBooleanOperator::operatorOr(CodeGenContext& context) {
 	Symbol_ptr lhsValue = context.valueStack.top();
-		context.valueStack.pop();
+	context.valueStack.pop();
 
-		Symbol_ptr rhsValue = context.valueStack.top();
-		context.valueStack.pop();
+	Symbol_ptr rhsValue = context.valueStack.top();
+	context.valueStack.pop();
 
-		PSLang::SymbolType resultType =
-				lhsValue->getType() == Float || rhsValue->getType() == Float ?
-						Float : Int;
+	PSLang::SymbolType resultType =
+			lhsValue->getType() == Float || rhsValue->getType() == Float ?
+					Float : Int;
 
-		std::string registerType = resultType == Int ? "R" : "F";
+	std::string registerType = resultType == Int ? "R" : "F";
 
-		context.programInstructions.push_back(
-				Instruction("MOV", registerType + "1", lhsValue->getValue()));
-		context.programInstructions.push_back(
-				Instruction("JNZ", toString(Instruction::_instuctionCounter + 5)));
-		context.programInstructions.push_back(
-				Instruction("MOV", registerType + "2", rhsValue->getValue()));
-		context.programInstructions.push_back(
-				Instruction("JNZ", toString(Instruction::_instuctionCounter + 3)));
-		context.programInstructions.push_back(
-				Instruction("MOV", registerType + "1", "0"));
-		context.programInstructions.push_back(
-				Instruction("JMP", toString(Instruction::_instuctionCounter + 2)));
-		context.programInstructions.push_back(
-				Instruction("MOV", registerType + "1", "1"));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "1", lhsValue->getValue()));
+	context.programInstructions.push_back(
+			Instruction("JNZ", toString(Instruction::_instuctionCounter + 5)));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "2", rhsValue->getValue()));
+	context.programInstructions.push_back(
+			Instruction("JNZ", toString(Instruction::_instuctionCounter + 3)));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "1", "0"));
+	context.programInstructions.push_back(
+			Instruction("JMP", toString(Instruction::_instuctionCounter + 2)));
+	context.programInstructions.push_back(
+			Instruction("MOV", registerType + "1", "1"));
 
-		PSLang::Variable var = context.createTemporaryVariable(resultType);
-		context.programInstructions.push_back(
-				Instruction("MOV", var.getValue(), registerType + "1"));
-		context.valueStack.push(
-				std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
+	PSLang::Variable var = context.createTemporaryVariable(resultType);
+	context.programInstructions.push_back(
+			Instruction("MOV", var.getValue(), registerType + "1"));
+	context.valueStack.push(
+			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 }
 void NAssignment::accept(CodeGenContext& context) {
 
@@ -251,16 +251,47 @@ void NIfStatement::accept(CodeGenContext& context) {
 			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
 	context.valueStack.pop();
 
-	std::string labelName = "__label-"
-			+ toString(Instruction::_instuctionCounter);
-	context.programInstructions.push_back(Instruction("JZ", labelName));
+	auto labelName = context.addJumpWithLabel("JZ",
+			Instruction::_instuctionCounter);
 
 	block.accept(context);
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 }
 
-void NWhileStatement::accept(CodeGenContext& context) {
+void NIfElseStatement::accept(CodeGenContext& context) {
+	boolExpr.accept(context);
+	Symbol_ptr var = context.valueStack.top();
+	context.programInstructions.push_back(
+			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
+	context.valueStack.pop();
 
+	auto ifLabel = context.addJumpWithLabel("JZ",
+			Instruction::_instuctionCounter);
+
+	block.accept(context);
+	auto endIfLabel = context.addJumpWithLabel("JMP",
+			Instruction::_instuctionCounter);
+	context.createLabel(ifLabel, Instruction::_instuctionCounter);
+	elseBlock.accept(context);
+	context.createLabel(endIfLabel, Instruction::_instuctionCounter);
+}
+
+void NWhileStatement::accept(CodeGenContext& context) {
+	int beginWhile = Instruction::_instuctionCounter;
+	boolExpr.accept(context);
+	Symbol_ptr var = context.valueStack.top();
+	context.programInstructions.push_back(
+			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
+	context.valueStack.pop();
+
+	auto labelName = context.addJumpWithLabel("JZ",
+			Instruction::_instuctionCounter);
+
+	block.accept(context);
+	auto beginWhileLabel = context.addJumpWithLabel("JMP",	beginWhile);
+
+	context.createLabel(labelName, Instruction::_instuctionCounter);
+	context.createLabel(beginWhileLabel, beginWhile);
 }
 
 }

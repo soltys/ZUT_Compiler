@@ -70,6 +70,14 @@ void CodeGenContext::clearTemporaryVariables() {
 		}
 	}
 }
+
+std::string CodeGenContext::addJumpWithLabel(const std::string& command, const int& id)
+{
+	std::string labelName = "__label-" + toString(id);
+	programInstructions.push_back(Instruction(command, "__label-" + toString(id)));
+	return labelName;
+}
+
 void CodeGenContext::createLabel(const std::string& name, const int& value){
 	labels.insert(std::make_pair(name,value));
 }
@@ -113,6 +121,10 @@ void CodeGenContext::generateCode(NBlock &root) {
 	std::cout << "-------------- Value stack ---------" << std::endl;
 	std::cout << "CURRENT SIZE: " << valueStack.size() <<  std::endl;
 
+	std::cout << "--------------    LABELS   ---------" << std::endl;
+		for (auto it = labels.begin(); it != labels.end(); it++) {
+			std::cout << it->first << "\t\t" << it->second << std::endl;
+		}
 }
 
 }

@@ -170,11 +170,23 @@ public:
 };
 
 class NIfStatement:public NStatement{
+protected:
 	NExpression& boolExpr;
 	NBlock& block;
 public:
 	NIfStatement(NExpression& boolExpr, NBlock& block):
 		boolExpr(boolExpr),block(block){}
+
+	virtual void accept(CodeGenContext& context);
+};
+
+
+class NIfElseStatement:public NIfStatement{
+protected:
+	NBlock& elseBlock;
+public:
+	NIfElseStatement(NExpression& boolExpr, NBlock& block, NBlock& elseBlock):
+		NIfStatement(boolExpr,block),elseBlock(elseBlock){}
 
 	virtual void accept(CodeGenContext& context);
 };
