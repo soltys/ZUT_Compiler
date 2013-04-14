@@ -1,8 +1,19 @@
-int test=0;
-int foo = 20;
+int t1=0;
+int t2=0;
+int t3=0;
 
-for(int i =0; i < 5 ; i=i+1;)
+if(1>5)
 {
- test = test + 5;
+    t1 = 1;
+    if( t1 != 1 || t2 == 0)
+    {
+        t2=32;
+    }
+ 
 }
+else{
+   t3=3;
+}
+
+
 
