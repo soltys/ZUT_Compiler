@@ -20,6 +20,7 @@ class NVariableDeclaration;
 typedef std::vector<NStatement*> StatementList;
 typedef std::vector<NExpression*> ExpressionList;
 typedef std::vector<NVariableDeclaration*> VariableList;
+typedef std::vector<long int> IndexList;
 enum ValueType {
 	IntType, DoubleType
 };
@@ -74,6 +75,16 @@ public:
 	virtual void accept(CodeGenContext& context);
 };
 
+class NArrayIdentifier: public NIdentifier {
+public:
+
+	IndexList indexes;
+	NArrayIdentifier(NIdentifier& id, const IndexList& indexes) :
+		NIdentifier(id.name),indexes(indexes) {
+	}
+	virtual void accept(CodeGenContext& context);
+};
+
 class NMethodCall: public NExpression {
 public:
 	const NIdentifier& id;
@@ -123,6 +134,7 @@ public:
 	virtual void accept(CodeGenContext& context);
 };
 
+
 class NBlock: public NExpression {
 public:
 	StatementList statements;
@@ -154,6 +166,18 @@ public:
 	}
 	virtual void accept(CodeGenContext& context);
 
+};
+
+class NArrayDeclaration: public NVariableDeclaration
+{
+public:
+
+	IndexList indexes;
+	NArrayDeclaration(const NIdentifier& type, NIdentifier& id, const IndexList& indexes):
+		NVariableDeclaration(type,id),indexes(indexes){
+
+	}
+	virtual void accept(CodeGenContext& context);
 };
 
 class NFunctionDeclaration: public NStatement {

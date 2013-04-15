@@ -25,6 +25,8 @@ public:
 };
 
 class Variable: public Symbol {
+protected:
+
 public:
 	Variable(const int offset, const SymbolType type);
 	Variable(const int offset, const int size, const SymbolType type);

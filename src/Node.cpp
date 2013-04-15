@@ -30,6 +30,23 @@ void NIdentifier::accept(CodeGenContext& context) {
 	context.valueStack.push(var);
 }
 
+void NArrayIdentifier::accept(CodeGenContext& context) {
+	auto it = indexes.begin();
+	int index = *it;
+	std::cout << "NArrayIdentifier " << name << " index:" << index <<std::endl;
+	if (context.locals.find(name) == std::end(context.locals)) {
+		throw std::runtime_error("Variable is not declared");
+	}
+	Variable_ptr var = context.locals.find(name)->second;
+	int memoryOffset = var->offset+index;
+
+	std::cout << "memory offset: " << memoryOffset <<  std::endl;
+
+	auto stackValue  = Variable_ptr(
+			new Variable(memoryOffset,var->getType()));
+	context.valueStack.push(stackValue);
+}
+
 void NMethodCall::accept(CodeGenContext& context) {
 
 }
@@ -198,12 +215,18 @@ void NAssignment::accept(CodeGenContext& context) {
 	if (context.locals.find(lhs.name) == std::end(context.locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
-	rhs.accept(context);
 
+
+	rhs.accept(context);
 	std::shared_ptr<Symbol> rhsValue = context.valueStack.top();
-	context.programInstructions.push_back(
-			Instruction("MOV", var->getValue(), rhsValue->getValue()));
 	context.valueStack.pop();
+
+	lhs.accept(context);
+	std::shared_ptr<Symbol> lhsVariable = context.valueStack.top();
+	context.valueStack.pop();
+	context.programInstructions.push_back(
+			Instruction("MOV", lhsVariable->getValue(), rhsValue->getValue()));
+
 }
 
 void NBlock::accept(CodeGenContext& context) {
@@ -240,6 +263,38 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 	}
 
 }
+
+
+void NArrayDeclaration::accept(CodeGenContext& context) {
+	std::stringstream ss;
+
+	int arraySize = 1;
+	std::cout << "Creating array declaration " << type.name << " " << id.name;
+	for(auto& index:indexes)
+	{
+		std::cout << "[" << arraySize << "]";
+		arraySize *= index;
+	}
+	std::cout << std::endl;
+
+
+
+
+	if (type.name == "int") {
+		context.createVariable(id.name, Int, false, arraySize);
+	} else if (type.name == "float") {
+		context.createVariable(id.name, Float, false, arraySize);
+	} else {
+		throw std::runtime_error("Supported only types of int & float");
+	}
+
+	if (assignmentExpression != nullptr) {
+		NAssignment assn(id, *assignmentExpression);
+		assn.accept(context);
+	}
+
+}
+
 
 void NFunctionDeclaration::accept(CodeGenContext& context) {
 

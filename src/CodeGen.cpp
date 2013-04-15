@@ -23,7 +23,7 @@ std::ostream& operator <<(std::ostream& o, const Instruction& a) {
 }
 
 PSLang::Variable CodeGenContext::createVariable(std::string & name,
-		PSLang::SymbolType type, bool isTemporary) {
+		PSLang::SymbolType type, bool isTemporary, int size) {
 
 	if (locals.find(name) == std::end(locals)) {
 		int maxMemoryIndex = 0;
@@ -35,16 +35,16 @@ PSLang::Variable CodeGenContext::createVariable(std::string & name,
 			locals.insert(
 					std::make_pair(name,
 							Variable_ptr(
-									new TemporaryVariable(maxMemoryIndex,
-											type))));
+									new TemporaryVariable(
+											maxMemoryIndex,type))));
 		} else {
 			locals.insert(
 					std::make_pair(name,
 							Variable_ptr(
-									new Variable(maxMemoryIndex, type))));
+									new Variable(maxMemoryIndex,size ,type))));
 		}
 
-		return Variable(maxMemoryIndex, type);
+		return Variable(maxMemoryIndex, size , type);
 	} else {
 		throw std::runtime_error(
 				"Variable already exists!, could not create new one.");

@@ -50,6 +50,8 @@ typedef PSLang::Parser::token token;
 ")"                     return TOKEN(TRPAREN);
 "{"                     return TOKEN(TLBRACE);
 "}"                     return TOKEN(TRBRACE);
+"["						return TOKEN(TLBRACKET);
+"]"						return TOKEN(TRBRACKET);
 "."                     return TOKEN(TDOT);
 ","                     return TOKEN(TCOMMA);
 "*"                     return TOKEN(TMUL);

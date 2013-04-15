@@ -30,7 +30,7 @@ public:
 
 	}
 	PSLang::Variable createVariable(std::string& name, PSLang::SymbolType type,
-			bool isTemporary = false);
+			bool isTemporary = false, int size = 1);
 	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
 	void clearTemporaryVariables();
 
