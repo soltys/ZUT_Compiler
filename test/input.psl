@@ -1,12 +1,4 @@
 int row = 120;
-int col = 10;
-while(row > 0)
-{
-    row = row - 10;
-    while(col > 0)
-        {
-            col = col - 1;
-        }
-}
+int col = 3 > 0;
 
 
