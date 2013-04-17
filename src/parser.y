@@ -131,9 +131,12 @@ ident : TIDENTIFIER { $$ = new NIdentifier(*$1); delete $1; }
       ;
 arrayindexes:arrayindex {$$ = new IndexList(); $$->push_back($1);}
 			| arrayindexes arrayindex {$1->push_back($2);}
+            ;
 
 arrayindex: TLBRACKET TINTEGER TRBRACKET { $$ = atol($2->c_str()); delete $2;}
+          ;
 arrayident: ident arrayindexes   {$$ = new NArrayIdentifier(*$<ident>1, *$2);   }
+          ;
 
  
 numeric : TINTEGER { $$ = new NInteger(atol($1->c_str())); delete $1; }
