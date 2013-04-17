@@ -1,4 +1,14 @@
-int row = 120;
-int col = 3 > 0;
+int tmp = 1;
+int fun(int n)
+{
+	tmp = tmp * n;
+	if(n != 1)
+	{
+		fun(n-1);
+	}
+ 
+}
+
+fun(5);
 
 

@@ -42,7 +42,7 @@ void NArrayIdentifier::accept(CodeGenContext& context) {
 	int arrayOffset = indexes.back();
 	int memoryOffset = var->offset + arrayOffset;
 
-	std::cout << "indexes.size(): " <<  var->indexes.size() << std::endl;
+	std::cout << "indexes.size(): " << var->indexes.size() << std::endl;
 	if (indexes.size() > 1) {
 		int multiDimensionOffset = 1;
 		auto varIt = var->indexes.begin();
@@ -67,6 +67,22 @@ void NArrayIdentifier::accept(CodeGenContext& context) {
 }
 
 void NMethodCall::accept(CodeGenContext& context) {
+	if (context.functions.find(id.name) == std::end(context.functions)) {
+		throw std::runtime_error("Function is not declared");
+	}
+	int functionStart = context.functions.find(id.name)->second;
+	auto labelName = context.addJumpWithLabel("PUSH");
+	for (auto it = arguments.begin(); it != arguments.end(); ++it) {
+		auto expr = *it;
+		expr->accept(context);
+		Symbol_ptr value = context.valueStack.top();
+		context.valueStack.pop();
+		context.programInstructions.push_back(
+				Instruction("PUSH", value->getValue()));
+	}
+	context.programInstructions.push_back(
+			Instruction("JMP", toString(functionStart)));
+	context.createLabel(labelName,Instruction::_instuctionCounter);
 
 }
 
@@ -309,7 +325,19 @@ void NArrayDeclaration::accept(CodeGenContext& context) {
 }
 
 void NFunctionDeclaration::accept(CodeGenContext& context) {
-
+	auto labelName = context.addJumpWithLabel("JMP");
+	context.createFunction(id.name, Instruction::_instuctionCounter);
+	for (auto it = arguments.begin(); it != arguments.end(); ++it) {
+		auto var_indet = *it;
+		var_indet->accept(context);
+		Variable_ptr var = context.locals.find(var_indet->id.name)->second;
+		context.programInstructions.push_back(
+				Instruction("POP", var->getValue()));
+	}
+	block.accept(context);
+	context.programInstructions.push_back(Instruction("POP", "R1"));
+	context.programInstructions.push_back(Instruction("JMP", "R1"));
+	context.createLabel(labelName, Instruction::_instuctionCounter);
 }
 
 void NIfStatement::accept(CodeGenContext& context) {
@@ -319,8 +347,7 @@ void NIfStatement::accept(CodeGenContext& context) {
 			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
 	context.valueStack.pop();
 
-	auto labelName = context.addJumpWithLabel("JZ",
-			Instruction::_instuctionCounter);
+	auto labelName = context.addJumpWithLabel("JZ");
 
 	block.accept(context);
 	context.createLabel(labelName, Instruction::_instuctionCounter);
@@ -333,12 +360,10 @@ void NIfElseStatement::accept(CodeGenContext& context) {
 			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
 	context.valueStack.pop();
 
-	auto ifLabel = context.addJumpWithLabel("JZ",
-			Instruction::_instuctionCounter);
+	auto ifLabel = context.addJumpWithLabel("JZ");
 
 	block.accept(context);
-	auto endIfLabel = context.addJumpWithLabel("JMP",
-			Instruction::_instuctionCounter);
+	auto endIfLabel = context.addJumpWithLabel("JMP");
 	context.createLabel(ifLabel, Instruction::_instuctionCounter);
 	elseBlock.accept(context);
 	context.createLabel(endIfLabel, Instruction::_instuctionCounter);
@@ -352,11 +377,10 @@ void NWhileStatement::accept(CodeGenContext& context) {
 			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
 	context.valueStack.pop();
 
-	auto labelName = context.addJumpWithLabel("JZ",
-			Instruction::_instuctionCounter);
+	auto labelName = context.addJumpWithLabel("JZ");
 
 	block.accept(context);
-	auto beginWhileLabel = context.addJumpWithLabel("JMP", beginWhile);
+	auto beginWhileLabel = context.addJumpWithLabel("JMP");
 
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 	context.createLabel(beginWhileLabel, beginWhile);
@@ -371,12 +395,11 @@ void NForStatement::accept(CodeGenContext& context) {
 			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
 	context.valueStack.pop();
 
-	auto labelName = context.addJumpWithLabel("JZ",
-			Instruction::_instuctionCounter);
+	auto labelName = context.addJumpWithLabel("JZ");
 
 	block.accept(context);
 	exprStmt.accept(context);
-	auto beginWhileLabel = context.addJumpWithLabel("JMP", beginWhile);
+	auto beginWhileLabel = context.addJumpWithLabel("JMP");
 
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 	context.createLabel(beginWhileLabel, beginWhile);

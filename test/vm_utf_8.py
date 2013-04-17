@@ -147,11 +147,15 @@ class VirtualMachine:
 		print self.execution_time
 		print
 
+	def show_stack(self):
+		print "STACK:"
+		for byte in self.stack:
+			print byte
 	def show_state(self):
 		self.show_registers()
 		self.show_memory()
 		self.show_time()
-
+		self.show_stack()
 	def get_mem_index(self, argument):
 			self.execution_time+=3
 			return int(argument.lstrip('#'))

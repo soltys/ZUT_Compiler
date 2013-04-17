@@ -23,6 +23,7 @@ class CodeGenContext {
 
 	int _temporaryVariableCounter;
 	std::map<std::string, int> labels;
+
 public:
 	std::ofstream outputStream;
 	CodeGenContext() :
@@ -35,15 +36,17 @@ public:
 	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
 	void clearTemporaryVariables();
 
-	std::string addJumpWithLabel(const std::string& command, const int& id);
+	std::string addJumpWithLabel(const std::string& command);
 	void createLabel(const std::string& name, const int& value);
 	void clearLabels();
 	void swapLabels();
 
+	void createFunction(const std::string& name, int instuctionStart);
+
 	void generateCode(NBlock& root);
 
 	std::map<std::string, Variable_ptr> locals;
-
+	std::map<std::string, int> functions;
 	std::stack<Symbol_ptr> valueStack;
 	std::vector<PSLang::Instruction> programInstructions;
 

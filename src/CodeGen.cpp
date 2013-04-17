@@ -92,11 +92,11 @@ void CodeGenContext::clearTemporaryVariables() {
 	}
 }
 
-std::string CodeGenContext::addJumpWithLabel(const std::string& command,
-		const int& id) {
+std::string CodeGenContext::addJumpWithLabel(const std::string& command) {
+	int id = Instruction::_instuctionCounter;
 	std::string labelName = "__label-" + toString(id);
 	programInstructions.push_back(
-			Instruction(command, "__label-" + toString(id)));
+			Instruction(command, labelName));
 	return labelName;
 }
 
@@ -120,6 +120,15 @@ void CodeGenContext::swapLabels() {
 			instruction.param1 = toString(ip);
 		}
 	}
+}
+
+void CodeGenContext::createFunction(const std::string& name, int instuctionStart)
+{
+	if (functions.find(name) != std::end(functions)) {
+			throw std::runtime_error(
+					"Function already exists!, could not create new one.");
+		}
+	functions.insert(std::make_pair(name,instuctionStart));
 }
 
 void CodeGenContext::generateCode(NBlock &root) {
