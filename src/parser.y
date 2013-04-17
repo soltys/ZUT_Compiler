@@ -79,14 +79,14 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 %left TMUL TDIV
 
 
-%type <ident> ident arrayident
+%type <ident> ident array_ident
 %type <expr> numeric expr 
 %type <varvec> func_decl_args
 %type <exprvec> call_args
 %type <block> program stmts block
 %type <stmt> stmt var_decl func_decl if_stmt while_stmt for_stmt
-%type <index> arrayindex
-%type <indexes> arrayindexes
+%type <index> array_index
+%type <indexes> array_indexes
 %start program
 
 %%
@@ -115,7 +115,7 @@ block : TLBRACE stmts TRBRACE { $$ = $2; }
 
 var_decl : ident ident { $$ = new PSLang::NVariableDeclaration(*$1, *$2); }
          | ident ident TEQUAL expr { $$ = new NVariableDeclaration(*$1, *$2, $4); }
-         | ident ident arrayindexes  	{$$ = new NArrayDeclaration(*$1, *$2, *$3); delete $3;} 
+         | ident ident array_indexes  	{$$ = new NArrayDeclaration(*$1, *$2, *$3); delete $3;} 
          ;
         
 func_decl : ident ident TLPAREN func_decl_args TRPAREN block 
@@ -129,13 +129,13 @@ func_decl_args :  { $$ = new VariableList(); }
 
 ident : TIDENTIFIER { $$ = new NIdentifier(*$1); delete $1; }	    	  
       ;
-arrayindexes:arrayindex {$$ = new IndexList(); $$->push_back($1);}
-			| arrayindexes arrayindex {$1->push_back($2);}
+array_indexes:array_index {$$ = new IndexList(); $$->push_back($1);}
+			| array_indexes array_index {$1->push_back($2);}
             ;
 
-arrayindex: TLBRACKET TINTEGER TRBRACKET { $$ = atol($2->c_str()); delete $2;}
+array_index: TLBRACKET TINTEGER TRBRACKET { $$ = atol($2->c_str()); delete $2;}
           ;
-arrayident: ident arrayindexes   {$$ = new NArrayIdentifier(*$<ident>1, *$2);   }
+array_ident: ident array_indexes   {$$ = new NArrayIdentifier(*$<ident>1, *$2);   }
           ;
 
  
@@ -145,10 +145,10 @@ numeric : TINTEGER { $$ = new NInteger(atol($1->c_str())); delete $1; }
     
    
 expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }	
-     | arrayident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); } 
+     | array_ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); } 
      | ident TLPAREN call_args TRPAREN { $$ = new PSLang::NMethodCall(*$1, *$3); delete $3; }
      | ident { $<ident>$ = $1; }
-     | arrayident { $<ident>$ = $1;}    
+     | array_ident { $<ident>$ = $1;}    
      | expr TPLUS expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr TMINUS expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
      | expr TMUL expr { $$ = new NBinaryOperator(*$1, $2, *$3); }
