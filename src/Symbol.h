@@ -30,10 +30,13 @@ protected:
 public:
 	Variable(const int offset, const SymbolType type);
 	Variable(const int offset, const int size, const SymbolType type);
+	Variable(const int offset, std::vector<long int> indexes, const SymbolType type);
 	virtual std::string getValue();
+	int getSize();
 	virtual bool isTemporaryValue();
+	std::vector<long int> indexes;
 	int offset;
-	int size;
+
 };
 
 class TemporaryVariable: public Variable {

@@ -30,11 +30,27 @@ PSLang::SymbolType Symbol::getType() {
 }
 
 Variable::Variable(const int offset, const SymbolType type) :
-		Symbol(type), offset(offset), size(1) {
+		Symbol(type), offset(offset){
+	indexes.push_back(1);
 }
 Variable::Variable(const int offset, const int size, const SymbolType type) :
-		Symbol(type), offset(offset), size(size) {
+		Symbol(type), offset(offset) {
+	indexes.push_back(size);
 }
+
+Variable::Variable(const int offset, std::vector<long int> indexes, const SymbolType type)
+:Symbol(type),indexes(indexes), offset(offset){
+
+}
+int Variable::getSize(){
+	int size = 1;
+	for(auto& index : indexes)
+	{
+		size *= index;
+	}
+	return size;
+}
+
 bool Variable::isTemporaryValue() {
 	return false;
 }

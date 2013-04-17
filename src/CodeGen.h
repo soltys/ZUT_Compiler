@@ -31,6 +31,7 @@ public:
 	}
 	PSLang::Variable createVariable(std::string& name, PSLang::SymbolType type,
 			bool isTemporary = false, int size = 1);
+	PSLang::Variable createArray(std::string& name, PSLang::SymbolType type,std::vector<long int> indexes);
 	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
 	void clearTemporaryVariables();
 

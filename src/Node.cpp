@@ -8,6 +8,7 @@
 #include "Utils.hpp"
 #include "parser.hh"
 #include <algorithm>
+#include <boost/utility.hpp>
 namespace PSLang {
 typedef PSLang::Parser::token token;
 
@@ -31,20 +32,38 @@ void NIdentifier::accept(CodeGenContext& context) {
 }
 
 void NArrayIdentifier::accept(CodeGenContext& context) {
-	auto it = indexes.begin();
-	int index = *it;
-	std::cout << "NArrayIdentifier " << name << " index:" << index <<std::endl;
+
+	//std::cout << "NArrayIdentifier " << name << " index:" << index <<std::endl;
 	if (context.locals.find(name) == std::end(context.locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
 	Variable_ptr var = context.locals.find(name)->second;
-	int memoryOffset = var->offset+index;
 
-	std::cout << "memory offset: " << memoryOffset <<  std::endl;
+	int arrayOffset = indexes.back();
+	int memoryOffset = var->offset + arrayOffset;
 
-	auto stackValue  = Variable_ptr(
-			new Variable(memoryOffset,var->getType()));
+	std::cout << "indexes.size(): " <<  var->indexes.size() << std::endl;
+	if (indexes.size() > 1) {
+		int multiDimensionOffset = 1;
+		auto varIt = var->indexes.begin();
+		++varIt;
+		for (auto it = indexes.begin();
+				(it != indexes.end()) && (boost::next(it) != indexes.end());
+				++it) {
+			for (auto arrayIt = varIt; arrayIt != var->indexes.end();
+					++arrayIt) {
+				multiDimensionOffset += (*arrayIt) * (*it);
+			}
+			++varIt;
+		}
+		memoryOffset += multiDimensionOffset;
+	}
+
+	std::cout << "memory offset: " << memoryOffset << std::endl;
+
+	auto stackValue = Variable_ptr(new Variable(memoryOffset, var->getType()));
 	context.valueStack.push(stackValue);
+
 }
 
 void NMethodCall::accept(CodeGenContext& context) {
@@ -216,7 +235,6 @@ void NAssignment::accept(CodeGenContext& context) {
 		throw std::runtime_error("Variable is not declared");
 	}
 
-
 	rhs.accept(context);
 	std::shared_ptr<Symbol> rhsValue = context.valueStack.top();
 	context.valueStack.pop();
@@ -264,26 +282,21 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 
 }
 
-
 void NArrayDeclaration::accept(CodeGenContext& context) {
 	std::stringstream ss;
 
 	int arraySize = 1;
 	std::cout << "Creating array declaration " << type.name << " " << id.name;
-	for(auto& index:indexes)
-	{
+	for (auto& index : indexes) {
 		std::cout << "[" << arraySize << "]";
 		arraySize *= index;
 	}
 	std::cout << std::endl;
 
-
-
-
 	if (type.name == "int") {
-		context.createVariable(id.name, Int, false, arraySize);
+		context.createArray(id.name, Int, indexes);
 	} else if (type.name == "float") {
-		context.createVariable(id.name, Float, false, arraySize);
+		context.createArray(id.name, Float, indexes);
 	} else {
 		throw std::runtime_error("Supported only types of int & float");
 	}
@@ -294,7 +307,6 @@ void NArrayDeclaration::accept(CodeGenContext& context) {
 	}
 
 }
-
 
 void NFunctionDeclaration::accept(CodeGenContext& context) {
 
@@ -344,31 +356,30 @@ void NWhileStatement::accept(CodeGenContext& context) {
 			Instruction::_instuctionCounter);
 
 	block.accept(context);
-	auto beginWhileLabel = context.addJumpWithLabel("JMP",	beginWhile);
+	auto beginWhileLabel = context.addJumpWithLabel("JMP", beginWhile);
 
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 	context.createLabel(beginWhileLabel, beginWhile);
 }
 
-void NForStatement::accept(CodeGenContext& context)
-{
+void NForStatement::accept(CodeGenContext& context) {
 	varDecl.accept(context);
 	int beginWhile = Instruction::_instuctionCounter;
-		boolExpr.accept(context);
-		Symbol_ptr var = context.valueStack.top();
-		context.programInstructions.push_back(
-				Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
-		context.valueStack.pop();
+	boolExpr.accept(context);
+	Symbol_ptr var = context.valueStack.top();
+	context.programInstructions.push_back(
+			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
+	context.valueStack.pop();
 
-		auto labelName = context.addJumpWithLabel("JZ",
-				Instruction::_instuctionCounter);
+	auto labelName = context.addJumpWithLabel("JZ",
+			Instruction::_instuctionCounter);
 
-		block.accept(context);
-		exprStmt.accept(context);
-		auto beginWhileLabel = context.addJumpWithLabel("JMP",	beginWhile);
+	block.accept(context);
+	exprStmt.accept(context);
+	auto beginWhileLabel = context.addJumpWithLabel("JMP", beginWhile);
 
-		context.createLabel(labelName, Instruction::_instuctionCounter);
-		context.createLabel(beginWhileLabel, beginWhile);
+	context.createLabel(labelName, Instruction::_instuctionCounter);
+	context.createLabel(beginWhileLabel, beginWhile);
 }
 
 }
