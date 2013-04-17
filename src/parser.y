@@ -102,7 +102,7 @@ stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }
       ;
 
 stmt : var_decl  TSEMICOLON
-     | func_decl TSEMICOLON       
+     | func_decl       
      | expr TSEMICOLON { $$ = new NExpressionStatement(*$1); }
      | if_stmt
      | while_stmt
@@ -110,6 +110,7 @@ stmt : var_decl  TSEMICOLON
      ;
 
 block : TLBRACE stmts TRBRACE { $$ = $2; }
+	  | expr TSEMICOLON { $$ = new NBlock(); $$->statements.push_back(new NExpressionStatement(*$1));}
       | TLBRACE TRBRACE { $$ = new NBlock(); }
       ;
 
