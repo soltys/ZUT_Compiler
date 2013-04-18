@@ -16,5 +16,6 @@ Możliwości języka
 * if, for, while
 * warunki złożone z && oraz ||
 * tablice jedno i wielowymiarowe
+* Funkcje z obsługą parametrów i rekurencją (nie obsługuje zwracania wartości)
 
 Język w założeniu ma przypominać C. Mogą wystąpić wyjątki od reguły, aby zmylić osobę, która będzie próbowała oddać gotowca :)

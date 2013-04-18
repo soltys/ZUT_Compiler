@@ -1,14 +1,17 @@
-int tmp = 1;
-int fun(int n)
+int tmp = 857893>213;
+
+int a = (2 * ((34<=34) + (311 == 311))) + 1;
+void fun(int n)
 {
 	tmp = tmp * n;
-	if(n != 1)
+	if(n != (772!=3))
 	{
-		fun(n-1);
+		fun(n- (1>0));
 	}
- 
 }
 
-fun(5);
+fun(a); 
+
+
 
 
