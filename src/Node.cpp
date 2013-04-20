@@ -13,31 +13,24 @@ namespace PSLang {
 typedef PSLang::Parser::token token;
 
 void NInteger::accept(CodeGenContext& context) {
-	context.valueStack.push(
+	context.addValueStackSymbol(
 			std::shared_ptr<IntConstant>(new IntConstant(value)));
 }
 
 void NDouble::accept(CodeGenContext& context) {
-	context.valueStack.push(
+	context.addValueStackSymbol(
 			std::shared_ptr<FloatConstant>(new FloatConstant(value)));
 }
 
 void NIdentifier::accept(CodeGenContext& context) {
 
-	if (context.locals.find(name) == std::end(context.locals)) {
-		throw std::runtime_error("Variable is not declared");
-	}
-	Variable_ptr var = context.locals.find(name)->second;
-	context.valueStack.push(var);
+	Variable_ptr var = context.getVariable(name);
+	context.addValueStackSymbol(var);
 }
 
 void NArrayIdentifier::accept(CodeGenContext& context) {
 
-	//std::cout << "NArrayIdentifier " << name << " index:" << index <<std::endl;
-	if (context.locals.find(name) == std::end(context.locals)) {
-		throw std::runtime_error("Variable is not declared");
-	}
-	Variable_ptr var = context.locals.find(name)->second;
+	Variable_ptr var = context.getVariable(name);
 
 	int arrayOffset = indexes.back();
 	int memoryOffset = var->offset + arrayOffset;
@@ -62,7 +55,7 @@ void NArrayIdentifier::accept(CodeGenContext& context) {
 	std::cout << "memory offset: " << memoryOffset << std::endl;
 
 	auto stackValue = Variable_ptr(new Variable(memoryOffset, var->getType()));
-	context.valueStack.push(stackValue);
+	context.addValueStackSymbol(stackValue);
 
 }
 
@@ -75,13 +68,10 @@ void NMethodCall::accept(CodeGenContext& context) {
 	for (auto it = arguments.begin(); it != arguments.end(); ++it) {
 		auto expr = *it;
 		expr->accept(context);
-		Symbol_ptr value = context.valueStack.top();
-		context.valueStack.pop();
-		context.programInstructions.push_back(
-				Instruction("PUSH", value->getValue()));
+		Symbol_ptr value = context.getSymbolFromValueStack();
+		context.addInstruction("PUSH", value->getValue());
 	}
-	context.programInstructions.push_back(
-			Instruction("JMP", toString(functionStart)));
+	context.addInstruction("JMP", toString(functionStart));
 	context.createLabel(labelName,Instruction::_instuctionCounter);
 
 }
@@ -90,11 +80,9 @@ void NBinaryOperator::accept(CodeGenContext& context) {
 	rhs.accept(context);
 	lhs.accept(context);
 
-	Symbol_ptr lhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	Symbol_ptr lhsValue = context.getSymbolFromValueStack();
 
-	Symbol_ptr rhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	Symbol_ptr rhsValue =context.getSymbolFromValueStack();
 
 	PSLang::SymbolType resultType =
 			lhsValue->getType() == Float || rhsValue->getType() == Float ?
@@ -102,35 +90,29 @@ void NBinaryOperator::accept(CodeGenContext& context) {
 
 	std::string registerType = resultType == Int ? "R" : "F";
 
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "2", rhsValue->getValue()));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", lhsValue->getValue()));
+	context.addInstruction("MOV", registerType + "2", rhsValue->getValue());
+	context.addInstruction("MOV", registerType + "1", lhsValue->getValue());
 
 	std::function<void(std::string)> genBool =
 			[&](std::string cmd) {
-				context.programInstructions.push_back(Instruction("SUB", registerType + "1", registerType + "2"));
-				context.programInstructions.push_back(Instruction(cmd, toString(Instruction::_instuctionCounter +3)));
-				context.programInstructions.push_back(Instruction("MOV", registerType + "1", "0"));
-				context.programInstructions.push_back(Instruction("JMP", toString(Instruction::_instuctionCounter +2)));
-				context.programInstructions.push_back(Instruction("MOV", registerType + "1", "1"));
+				context.addInstruction("SUB", registerType + "1", registerType + "2");
+				context.addInstruction(cmd, toString(Instruction::_instuctionCounter +3));
+				context.addInstruction("MOV", registerType + "1", "0");
+				context.addInstruction("JMP", toString(Instruction::_instuctionCounter +2));
+				context.addInstruction("MOV", registerType + "1", "1");
 			};
 	switch (op) {
 	case token::TPLUS:
-		context.programInstructions.push_back(
-				Instruction("ADD", registerType + "1", registerType + "2"));
+		context.addInstruction("ADD", registerType + "1", registerType + "2");
 		break;
 	case token::TMINUS:
-		context.programInstructions.push_back(
-				Instruction("SUB", registerType + "1", registerType + "2"));
+		context.addInstruction("SUB", registerType + "1", registerType + "2");
 		break;
 	case token::TMUL:
-		context.programInstructions.push_back(
-				Instruction("MUL", registerType + "1", registerType + "2"));
+		context.addInstruction("MUL", registerType + "1", registerType + "2");
 		break;
 	case token::TDIV:
-		context.programInstructions.push_back(
-				Instruction("DIV", registerType + "1", registerType + "2"));
+		context.addInstruction("DIV", registerType + "1", registerType + "2");
 		break;
 
 	case token::TCGT: // >
@@ -153,9 +135,8 @@ void NBinaryOperator::accept(CodeGenContext& context) {
 		break;
 	}
 	PSLang::Variable var = context.createTemporaryVariable(resultType);
-	context.programInstructions.push_back(
-			Instruction("MOV", var.getValue(), registerType + "1"));
-	context.valueStack.push(
+	context.addInstruction("MOV", var.getValue(), registerType + "1");
+	context.addValueStackSymbol(
 			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 
 }
@@ -175,11 +156,9 @@ void NBooleanOperator::accept(CodeGenContext& context) {
 }
 
 void NBooleanOperator::operatorAnd(CodeGenContext& context) {
-	Symbol_ptr lhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	Symbol_ptr lhsValue = context.getSymbolFromValueStack();
 
-	Symbol_ptr rhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	Symbol_ptr rhsValue = context.getSymbolFromValueStack();
 
 	PSLang::SymbolType resultType =
 			lhsValue->getType() == Float || rhsValue->getType() == Float ?
@@ -187,34 +166,24 @@ void NBooleanOperator::operatorAnd(CodeGenContext& context) {
 
 	std::string registerType = resultType == Int ? "R" : "F";
 
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", lhsValue->getValue()));
-	context.programInstructions.push_back(
-			Instruction("JZ", toString(Instruction::_instuctionCounter + 5)));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "2", rhsValue->getValue()));
-	context.programInstructions.push_back(
-			Instruction("JZ", toString(Instruction::_instuctionCounter + 3)));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", "1"));
-	context.programInstructions.push_back(
-			Instruction("JMP", toString(Instruction::_instuctionCounter + 2)));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", "0"));
+	context.addInstruction("MOV", registerType + "1", lhsValue->getValue());
+	context.addInstruction("JZ", toString(Instruction::_instuctionCounter + 5));
+	context.addInstruction("MOV", registerType + "2", rhsValue->getValue());
+	context.addInstruction("JZ", toString(Instruction::_instuctionCounter + 3));
+	context.addInstruction("MOV", registerType + "1", "1");
+	context.addInstruction("JMP", toString(Instruction::_instuctionCounter + 2));
+	context.addInstruction("MOV", registerType + "1", "0");
 
 	PSLang::Variable var = context.createTemporaryVariable(resultType);
-	context.programInstructions.push_back(
-			Instruction("MOV", var.getValue(), registerType + "1"));
-	context.valueStack.push(
+	context.addInstruction("MOV", var.getValue(), registerType + "1");
+	context.addValueStackSymbol(
 			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 }
 
 void NBooleanOperator::operatorOr(CodeGenContext& context) {
-	Symbol_ptr lhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	Symbol_ptr lhsValue = context.getSymbolFromValueStack();
 
-	Symbol_ptr rhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	Symbol_ptr rhsValue = context.getSymbolFromValueStack();
 
 	PSLang::SymbolType resultType =
 			lhsValue->getType() == Float || rhsValue->getType() == Float ?
@@ -222,45 +191,30 @@ void NBooleanOperator::operatorOr(CodeGenContext& context) {
 
 	std::string registerType = resultType == Int ? "R" : "F";
 
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", lhsValue->getValue()));
-	context.programInstructions.push_back(
-			Instruction("JNZ", toString(Instruction::_instuctionCounter + 5)));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "2", rhsValue->getValue()));
-	context.programInstructions.push_back(
-			Instruction("JNZ", toString(Instruction::_instuctionCounter + 3)));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", "0"));
-	context.programInstructions.push_back(
-			Instruction("JMP", toString(Instruction::_instuctionCounter + 2)));
-	context.programInstructions.push_back(
-			Instruction("MOV", registerType + "1", "1"));
+	context.addInstruction("MOV", registerType + "1", lhsValue->getValue());
+	context.addInstruction("JNZ", toString(Instruction::_instuctionCounter + 5));
+	context.addInstruction("MOV", registerType + "2", rhsValue->getValue());
+	context.addInstruction("JNZ", toString(Instruction::_instuctionCounter + 3));
+	context.addInstruction("MOV", registerType + "1", "0");
+	context.addInstruction("JMP", toString(Instruction::_instuctionCounter + 2));
+	context.addInstruction("MOV", registerType + "1", "1");
 
 	PSLang::Variable var = context.createTemporaryVariable(resultType);
-	context.programInstructions.push_back(
-			Instruction("MOV", var.getValue(), registerType + "1"));
-	context.valueStack.push(
+	context.addInstruction("MOV", var.getValue(), registerType + "1");
+	context.addValueStackSymbol(
 			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 }
 void NAssignment::accept(CodeGenContext& context) {
 
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
-	Variable_ptr var = context.locals.find(lhs.name)->second;
-	if (context.locals.find(lhs.name) == std::end(context.locals)) {
-		throw std::runtime_error("Variable is not declared");
-	}
+	Variable_ptr var = context.getVariable(lhs.name);
 
 	rhs.accept(context);
-	std::shared_ptr<Symbol> rhsValue = context.valueStack.top();
-	context.valueStack.pop();
+	std::shared_ptr<Symbol> rhsValue = context.getSymbolFromValueStack();
 
 	lhs.accept(context);
-	std::shared_ptr<Symbol> lhsVariable = context.valueStack.top();
-	context.valueStack.pop();
-	context.programInstructions.push_back(
-			Instruction("MOV", lhsVariable->getValue(), rhsValue->getValue()));
-
+	std::shared_ptr<Symbol> lhsVariable = context.getSymbolFromValueStack();
+	context.addInstruction("MOV", lhsVariable->getValue(), rhsValue->getValue());
 }
 
 void NBlock::accept(CodeGenContext& context) {
@@ -330,35 +284,32 @@ void NFunctionDeclaration::accept(CodeGenContext& context) {
 	for (auto it = arguments.begin(); it != arguments.end(); ++it) {
 		auto var_indet = *it;
 		var_indet->accept(context);
-		Variable_ptr var = context.locals.find(var_indet->id.name)->second;
-		context.programInstructions.push_back(
-				Instruction("POP", var->getValue()));
+		Variable_ptr var = context.getVariable(var_indet->id.name);
+
+		context.addInstruction("POP", var->getValue());
 	}
 	block.accept(context);
-	context.programInstructions.push_back(Instruction("POP", "R1"));
-	context.programInstructions.push_back(Instruction("JMP", "R1"));
+	context.addInstruction("POP", "R1");
+	context.addInstruction("JMP", "R1");
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 }
 
 void NIfStatement::accept(CodeGenContext& context) {
 	boolExpr.accept(context);
-	Symbol_ptr var = context.valueStack.top();
-	context.programInstructions.push_back(
-			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
-	context.valueStack.pop();
+	Symbol_ptr var = context.getSymbolFromValueStack();
+	context.addInstruction("MOV", var->getTypeRegister() + "1", var->getValue());
+
 
 	auto labelName = context.addJumpWithLabel("JZ");
-
 	block.accept(context);
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 }
 
 void NIfElseStatement::accept(CodeGenContext& context) {
 	boolExpr.accept(context);
-	Symbol_ptr var = context.valueStack.top();
-	context.programInstructions.push_back(
-			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
-	context.valueStack.pop();
+	Symbol_ptr var = context.getSymbolFromValueStack();
+	context.addInstruction("MOV", var->getTypeRegister() + "1", var->getValue());
+
 
 	auto ifLabel = context.addJumpWithLabel("JZ");
 
@@ -372,10 +323,8 @@ void NIfElseStatement::accept(CodeGenContext& context) {
 void NWhileStatement::accept(CodeGenContext& context) {
 	int beginWhile = Instruction::_instuctionCounter;
 	boolExpr.accept(context);
-	Symbol_ptr var = context.valueStack.top();
-	context.programInstructions.push_back(
-			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
-	context.valueStack.pop();
+	Symbol_ptr var = context.getSymbolFromValueStack();
+	context.addInstruction("MOV", var->getTypeRegister() + "1", var->getValue());
 
 	auto labelName = context.addJumpWithLabel("JZ");
 
@@ -390,10 +339,9 @@ void NForStatement::accept(CodeGenContext& context) {
 	varDecl.accept(context);
 	int beginWhile = Instruction::_instuctionCounter;
 	boolExpr.accept(context);
-	Symbol_ptr var = context.valueStack.top();
-	context.programInstructions.push_back(
-			Instruction("MOV", var->getTypeRegister() + "1", var->getValue()));
-	context.valueStack.pop();
+	Symbol_ptr var = context.getSymbolFromValueStack();
+	context.addInstruction("MOV", var->getTypeRegister() + "1", var->getValue());
+
 
 	auto labelName = context.addJumpWithLabel("JZ");
 

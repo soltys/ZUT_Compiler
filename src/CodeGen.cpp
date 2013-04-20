@@ -32,11 +32,9 @@ PSLang::Variable CodeGenContext::createArray(std::string& name,
 		maxMemoryIndex = std::max(maxMemoryIndex,
 				it->second->offset + it->second->getSize());
 	}
-		locals.insert(
-				std::make_pair(name,
-						Variable_ptr(
-								new Variable(maxMemoryIndex, indexes, type))));
-
+	locals.insert(
+			std::make_pair(name,
+					Variable_ptr(new Variable(maxMemoryIndex, indexes, type))));
 
 	return Variable(maxMemoryIndex, indexes, type);
 
@@ -92,11 +90,18 @@ void CodeGenContext::clearTemporaryVariables() {
 	}
 }
 
+Variable_ptr CodeGenContext::getVariable(const std::string& name) {
+	if (locals.find(name) == std::end(locals)) {
+		throw std::runtime_error("Variable is not declared");
+	}
+	Variable_ptr var = locals.find(name)->second;
+	return var;
+}
+
 std::string CodeGenContext::addJumpWithLabel(const std::string& command) {
 	int id = Instruction::_instuctionCounter;
 	std::string labelName = "__label-" + toString(id);
-	programInstructions.push_back(
-			Instruction(command, labelName));
+	programInstructions.push_back(Instruction(command, labelName));
 	return labelName;
 }
 
@@ -122,13 +127,34 @@ void CodeGenContext::swapLabels() {
 	}
 }
 
-void CodeGenContext::createFunction(const std::string& name, int instuctionStart)
-{
+void CodeGenContext::createFunction(const std::string& name,
+		int instuctionStart) {
 	if (functions.find(name) != std::end(functions)) {
-			throw std::runtime_error(
-					"Function already exists!, could not create new one.");
-		}
-	functions.insert(std::make_pair(name,instuctionStart));
+		throw std::runtime_error(
+				"Function already exists!, could not create new one.");
+	}
+	functions.insert(std::make_pair(name, instuctionStart));
+}
+
+void CodeGenContext::addValueStackSymbol(Symbol_ptr symbol)
+{
+	valueStack.push(symbol);
+}
+
+Symbol_ptr CodeGenContext::getSymbolFromValueStack()
+{
+	Symbol_ptr symbol = valueStack.top();
+	valueStack.pop();
+	return symbol;
+}
+
+void CodeGenContext::addInstruction(const std::string& cmd,
+		const std::string& param1) {
+	programInstructions.push_back(Instruction(cmd, param1));
+}
+void CodeGenContext::addInstruction(const std::string& cmd,
+		const std::string& param1, const std::string& param2) {
+	programInstructions.push_back(Instruction(cmd, param1, param2));
 }
 
 void CodeGenContext::generateCode(NBlock &root) {
@@ -150,6 +176,11 @@ void CodeGenContext::generateCode(NBlock &root) {
 
 	std::cout << "-------------- Value stack ---------" << std::endl;
 	std::cout << "CURRENT SIZE: " << valueStack.size() << std::endl;
+
+	std::cout << "--------------    Functions   ---------" << std::endl;
+		for (auto it = functions.begin(); it != functions.end(); it++) {
+			std::cout << it->first << "\t\t" << it->second << std::endl;
+		}
 
 	std::cout << "--------------    LABELS   ---------" << std::endl;
 	for (auto it = labels.begin(); it != labels.end(); it++) {

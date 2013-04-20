@@ -23,7 +23,9 @@ class CodeGenContext {
 
 	int _temporaryVariableCounter;
 	std::map<std::string, int> labels;
-
+	std::map<std::string, Variable_ptr> locals;
+	std::vector<PSLang::Instruction> programInstructions;
+	std::stack<Symbol_ptr> valueStack;
 public:
 	std::ofstream outputStream;
 	CodeGenContext() :
@@ -34,6 +36,7 @@ public:
 			bool isTemporary = false, int size = 1);
 	PSLang::Variable createArray(std::string& name, PSLang::SymbolType type,std::vector<long int> indexes);
 	PSLang::Variable createTemporaryVariable(PSLang::SymbolType type);
+	Variable_ptr getVariable(const std::string& name);
 	void clearTemporaryVariables();
 
 	std::string addJumpWithLabel(const std::string& command);
@@ -43,12 +46,18 @@ public:
 
 	void createFunction(const std::string& name, int instuctionStart);
 
+	void addValueStackSymbol(Symbol_ptr symbol);
+	Symbol_ptr getSymbolFromValueStack();
+
+	void addInstruction(const std::string& cmd, const std::string& param1);
+	void addInstruction(const std::string& cmd, const std::string& param1, const std::string& param2);
+
 	void generateCode(NBlock& root);
 
-	std::map<std::string, Variable_ptr> locals;
+
 	std::map<std::string, int> functions;
-	std::stack<Symbol_ptr> valueStack;
-	std::vector<PSLang::Instruction> programInstructions;
+
+
 
 	virtual ~CodeGenContext() {
 
