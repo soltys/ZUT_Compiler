@@ -32,5 +32,5 @@ int main(const int argc, const char** argv) {
 
 static void printHelp() {
 	std::cout << "PSLang usage:" << std::endl;
-	std::cout << "pslang input [output]" << std::endl;
+	std::cout << "pslang [input] [output]" << std::endl;
 }
