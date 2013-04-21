@@ -31,9 +31,9 @@ public:
 	Variable(const int offset, const SymbolType type);
 	Variable(const int offset, const int size, const SymbolType type);
 	Variable(const int offset, std::vector<long int> indexes, const SymbolType type);
-	virtual std::string getValue();
+	virtual std::string getValue() ;
 	int getSize();
-	virtual bool isTemporaryValue();
+	virtual bool isTemporaryValue() ;
 	std::vector<long int> indexes;
 	int offset;
 

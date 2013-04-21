@@ -1,9 +1,3 @@
-/*
- * CodeGen.h
- *
- *  Created on: Mar 2, 2013
- *      Author: soltys
- */
 
 #ifndef CODEGEN_H_
 #define CODEGEN_H_
@@ -16,9 +10,14 @@
 #include <vector>
 #include <memory>
 namespace PSLang {
+
 class NBlock;
 typedef std::shared_ptr<PSLang::Symbol> Symbol_ptr;
 typedef std::shared_ptr<PSLang::Variable> Variable_ptr;
+
+/**
+ *  Code generating class, based on AST
+ */
 class CodeGenContext {
 
 	int _temporaryVariableCounter;
@@ -42,6 +41,10 @@ public:
 	std::string addJumpWithLabel(const std::string& command);
 	void createLabel(const std::string& name, const int& value);
 	void clearLabels();
+
+	/**
+	 * Swaps labels with instruction number based on labels map
+	 */
 	void swapLabels();
 
 	void createFunction(const std::string& name, int instuctionStart);

@@ -1,6 +1,7 @@
 SRCDIR = src
 BINDIR = bin
 TESTDIR = test
+DOCDIR = doc
 CP = cp -f
 RM = rm -f
 EXE = pslang
@@ -10,6 +11,9 @@ pslang:
 	$(MAKE) -C $(SRCDIR)
 	mkdir -p $(BINDIR)
 	$(CP) $(SRCDIR)/$@ $(BINDIR)/$@
+
+doc:
+	$(MAKE) -C $(DOCDIR)
 
 clean:
 	$(MAKE) -C $(SRCDIR) clean
@@ -22,4 +26,4 @@ rebuild:
 test:
 	$(MAKE) -C $(TESTDIR) all
 
-.PHONY: pslang clean rebuild test
+.PHONY: pslang clean rebuild test doc

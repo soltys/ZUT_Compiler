@@ -94,7 +94,7 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 // something silly to echo to the screen what bison gets from flex.  We'll
 // make a real one shortly:
 
-program : stmts { driver.programBlock = $1; }
+program : stmts { driver.setProgramBlock($1); }
         ;
         
 stmts : stmt { $$ = new NBlock(); $$->statements.push_back($<stmt>1); }

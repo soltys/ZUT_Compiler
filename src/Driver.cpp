@@ -8,15 +8,21 @@
 #endif
 
 PSLang::Driver::~Driver() {
+	delete programBlock;
+}
+
+void PSLang::Driver::setProgramBlock(NBlock* programBlock) {
+	this->programBlock = programBlock;
 }
 void PSLang::Driver::setVerbose(const bool& value) {
 	_isVerbose = value;
 }
-void PSLang::Driver::compile(const std::string& filename,const std::string& outputFile) {
+void PSLang::Driver::compile(const std::string& filename,
+		const std::string& outputFile) {
 	if (_isVerbose) {
-	std::cout << "Compilation started!" << std::endl << "Input file: "
-			<< filename << std::endl << "Output file: " << outputFile
-			<< std::endl;
+		std::cout << "Compilation started!" << std::endl << "Input file: "
+				<< filename << std::endl << "Output file: " << outputFile
+				<< std::endl;
 	}
 	std::ifstream in_file(filename);
 	if (!in_file.good())
@@ -31,7 +37,7 @@ void PSLang::Driver::compile(const std::string& filename,const std::string& outp
 	PSLang::CodeGenContext codeGenContext;
 	codeGenContext.generateCode(*programBlock);
 
-	if(_isVerbose){
+	if (_isVerbose) {
 		std::cout << "Compilation ended successfully!" << std::endl;
 	}
 

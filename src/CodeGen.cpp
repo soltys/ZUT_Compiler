@@ -116,13 +116,13 @@ void CodeGenContext::clearLabels() {
 
 void CodeGenContext::swapLabels() {
 	for (PSLang::Instruction& instruction : programInstructions) {
-		if (boost::starts_with(instruction.param1, "__label")) {
-			int ip = labels.find(instruction.param1)->second;
-			if (labels.find(instruction.param1) == std::end(labels)) {
+		if (boost::starts_with(instruction.getParam1(), "__label")) {
+			int ip = labels.find(instruction.getParam1())->second;
+			if (labels.find(instruction.getParam1()) == std::end(labels)) {
 				throw std::runtime_error(
-						"Label" + instruction.param1 + " is not found :(");
+						"Label" + instruction.getParam1() + " is not found :(");
 			}
-			instruction.param1 = toString(ip);
+			instruction.setParam1(toString(ip));
 		}
 	}
 }

@@ -16,12 +16,15 @@ public:
 	virtual ~Driver();
 	void compile(const std::string& filename, const std::string& output);
 
+	/**
+	 * Sets compilation into verbose mode.
+	 */
 	void setVerbose(const bool& value);
 
+	void setProgramBlock(NBlock* programBlock);
 
-	NBlock* programBlock;
 private:
-
+	NBlock* programBlock;
 	std::unique_ptr<PSLang::Parser> parser;
 	std::unique_ptr<PSLang::Scanner> scanner;
 	bool _isVerbose;
