@@ -1,7 +1,0 @@
-int forobar = 5 + (10 + 2) * 7;
-int boor = 666;
-
-if(5+5)
-{
-	int bike = 777;
-}
