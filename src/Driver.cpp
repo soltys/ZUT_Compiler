@@ -3,6 +3,7 @@
 #include <string>
 #include "Driver.h"
 #include "CodeGen.h"
+#include "CodeGenLLVM.h"
 #ifndef FAIL
 #define FAIL -1
 #endif
@@ -17,6 +18,11 @@ void PSLang::Driver::setProgramBlock(NBlock* programBlock) {
 void PSLang::Driver::setVerbose(const bool& value) {
 	_isVerbose = value;
 }
+void PSLang::Driver::setLLVMMode(const bool& value)
+{
+	llvmMode = value;
+}
+
 void PSLang::Driver::compile(const std::string& filename,
 		const std::string& outputFile) {
 	if (_isVerbose) {
@@ -34,8 +40,18 @@ void PSLang::Driver::compile(const std::string& filename,
 	if (parser->parse() == FAIL) {
 		std::cerr << "Parse failed!!\n";
 	}
-	PSLang::CodeGenContext codeGenContext;
-	codeGenContext.generateCode(*programBlock);
+
+	CodeGenBase* codeGenerator;
+	if(llvmMode)
+	{
+		codeGenerator = new CodeGenLLVM(outputFile);
+	}
+	else
+	{
+		codeGenerator = new CodeGen(outputFile);
+	}
+
+	codeGenerator->generateCode(*programBlock);
 
 	if (_isVerbose) {
 		std::cout << "Compilation ended successfully!" << std::endl;

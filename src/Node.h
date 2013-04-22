@@ -11,8 +11,12 @@
 #include <sstream>
 #include <ostream>
 #include <vector>
+
+#include <llvm/Value.h>
+
 namespace PSLang {
-class CodeGenContext;
+class CodeGen;
+class CodeGenLLVM;
 class NStatement;
 class NExpression;
 class NVariableDeclaration;
@@ -30,18 +34,19 @@ public:
 	}
 	virtual ~Node() {
 	}
-	virtual void accept(CodeGenContext& context) =0;
+	virtual void accept(CodeGen& context) =0;
+	virtual llvm::Value* codeGen(CodeGenLLVM& context){return nullptr;};
 
 };
 
 class NExpression: public Node {
 public:
-	virtual void accept(CodeGenContext& context) =0;
+	virtual void accept(CodeGen& context) =0;
 };
 
 class NStatement: public Node {
 public:
-	virtual void accept(CodeGenContext& context) =0;
+	virtual void accept(CodeGen& context) =0;
 };
 
 
@@ -52,7 +57,7 @@ public:
 			value(value) {
 	}
 
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 
 };
 
@@ -62,7 +67,7 @@ public:
 	NDouble(double value) :
 			value(value) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 
 };
 
@@ -72,7 +77,7 @@ public:
 	NIdentifier(const std::string & name) :
 			name(name) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NArrayIdentifier: public NIdentifier {
@@ -82,7 +87,7 @@ public:
 	NArrayIdentifier(NIdentifier& id, const ExpressionList& indexes) :
 		NIdentifier(id.name),indexes(indexes) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NMethodCall: public NExpression {
@@ -96,7 +101,7 @@ public:
 	NMethodCall(const NIdentifier& id) :
 			id(id) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 
@@ -109,7 +114,7 @@ public:
 	NBinaryOperator(NExpression& lhs, int op, NExpression& rhs) :
 			lhs(lhs), op(op), rhs(rhs) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NBooleanOperator: public NBinaryOperator {
@@ -118,10 +123,10 @@ public:
 	NBooleanOperator(NExpression& lhs, int op, NExpression& rhs) :
 		NBinaryOperator(lhs, op, rhs) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 
-	void operatorAnd(CodeGenContext& context);
-	void operatorOr(CodeGenContext& context);
+	void operatorAnd(CodeGen& context);
+	void operatorOr(CodeGen& context);
 };
 
 class NAssignment: public NExpression {
@@ -131,7 +136,7 @@ public:
 	NAssignment(NIdentifier& lhs, NExpression& rhs) :
 			lhs(lhs), rhs(rhs) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 
@@ -140,7 +145,7 @@ public:
 	StatementList statements;
 	NBlock() {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NExpressionStatement: public NStatement {
@@ -149,7 +154,7 @@ public:
 	NExpressionStatement(NExpression& expression) :
 			expression(expression) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NVariableDeclaration: public NStatement {
@@ -164,7 +169,7 @@ public:
 			NExpression* assignmentExpression) :
 			type(type), id(id), assignmentExpression(assignmentExpression) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 
 };
 
@@ -177,7 +182,7 @@ public:
 		NVariableDeclaration(type,id),indexes(indexes){
 
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NFunctionDeclaration: public NStatement {
@@ -190,7 +195,7 @@ public:
 			const VariableList&arguments, NBlock& block) :
 			type(type), id(id), arguments(arguments), block(block) {
 	}
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NIfStatement:public NStatement{
@@ -201,7 +206,7 @@ public:
 	NIfStatement(NExpression& boolExpr, NBlock& block):
 		boolExpr(boolExpr),block(block){}
 
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 
@@ -212,7 +217,7 @@ public:
 	NIfElseStatement(NExpression& boolExpr, NBlock& block, NBlock& elseBlock):
 		NIfStatement(boolExpr,block),elseBlock(elseBlock){}
 
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 class NWhileStatement:public NStatement{
@@ -222,7 +227,7 @@ public:
 	NWhileStatement(NExpression& boolExpr, NBlock& block):
 		boolExpr(boolExpr),block(block){}
 
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 
@@ -235,7 +240,7 @@ public:
 	NForStatement(NExpression& assigment,NExpression& boolExpr,NStatement& exprStmt,  NBlock& block):
 		assigment(assigment),boolExpr(boolExpr),exprStmt(exprStmt),block(block){}
 
-	virtual void accept(CodeGenContext& context);
+	virtual void accept(CodeGen& context);
 };
 
 } // END NAMESPACE PSLang

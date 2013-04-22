@@ -8,6 +8,7 @@ Zależności:
 * flex
 * Kompilator obsługujący C++11 (korzystałem z g++ 4.7.2)
 * Biblioteka Boost (headers-only)
+* LLVM-dev package
 
 Możliwości języka
 * Zmienne

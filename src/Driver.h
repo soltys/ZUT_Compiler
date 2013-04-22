@@ -10,7 +10,7 @@ namespace PSLang {
 class Driver {
 public:
 	Driver() :
-			programBlock(nullptr),parser(nullptr), scanner(nullptr), _isVerbose(false){
+			programBlock(nullptr),parser(nullptr), scanner(nullptr), _isVerbose(false), llvmMode(false){
 	}
 
 	virtual ~Driver();
@@ -20,7 +20,10 @@ public:
 	 * Sets compilation into verbose mode.
 	 */
 	void setVerbose(const bool& value);
-
+	/*
+	 * Changes compilation to LLVM bytecode
+	 */
+	void setLLVMMode(const bool& value);
 	void setProgramBlock(NBlock* programBlock);
 
 private:
@@ -28,6 +31,7 @@ private:
 	std::unique_ptr<PSLang::Parser> parser;
 	std::unique_ptr<PSLang::Scanner> scanner;
 	bool _isVerbose;
+	bool llvmMode;
 };
 }
 

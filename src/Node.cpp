@@ -12,23 +12,23 @@
 namespace PSLang {
 typedef PSLang::Parser::token token;
 
-void NInteger::accept(CodeGenContext& context) {
+void NInteger::accept(CodeGen& context) {
 	context.addValueStackSymbol(
 			std::shared_ptr<IntConstant>(new IntConstant(value)));
 }
 
-void NDouble::accept(CodeGenContext& context) {
+void NDouble::accept(CodeGen& context) {
 	context.addValueStackSymbol(
 			std::shared_ptr<FloatConstant>(new FloatConstant(value)));
 }
 
-void NIdentifier::accept(CodeGenContext& context) {
+void NIdentifier::accept(CodeGen& context) {
 
 	Variable_ptr var = context.getVariable(name);
 	context.addValueStackSymbol(var);
 }
 
-void NArrayIdentifier::accept(CodeGenContext& context) {
+void NArrayIdentifier::accept(CodeGen& context) {
 
 	std::cout << "Array indent" << std::endl;
 
@@ -64,7 +64,7 @@ void NArrayIdentifier::accept(CodeGenContext& context) {
 
 }
 
-void NMethodCall::accept(CodeGenContext& context) {
+void NMethodCall::accept(CodeGen& context) {
 	if (context.functions.find(id.name) == std::end(context.functions)) {
 		throw std::runtime_error("Function is not declared");
 	}
@@ -81,7 +81,7 @@ void NMethodCall::accept(CodeGenContext& context) {
 
 }
 
-void NBinaryOperator::accept(CodeGenContext& context) {
+void NBinaryOperator::accept(CodeGen& context) {
 	rhs.accept(context);
 	lhs.accept(context);
 
@@ -146,7 +146,7 @@ void NBinaryOperator::accept(CodeGenContext& context) {
 
 }
 
-void NBooleanOperator::accept(CodeGenContext& context) {
+void NBooleanOperator::accept(CodeGen& context) {
 	rhs.accept(context);
 	lhs.accept(context);
 
@@ -160,7 +160,7 @@ void NBooleanOperator::accept(CodeGenContext& context) {
 
 }
 
-void NBooleanOperator::operatorAnd(CodeGenContext& context) {
+void NBooleanOperator::operatorAnd(CodeGen& context) {
 	Symbol_ptr lhsValue = context.getSymbolFromValueStack();
 
 	Symbol_ptr rhsValue = context.getSymbolFromValueStack();
@@ -185,7 +185,7 @@ void NBooleanOperator::operatorAnd(CodeGenContext& context) {
 			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 }
 
-void NBooleanOperator::operatorOr(CodeGenContext& context) {
+void NBooleanOperator::operatorOr(CodeGen& context) {
 	Symbol_ptr lhsValue = context.getSymbolFromValueStack();
 
 	Symbol_ptr rhsValue = context.getSymbolFromValueStack();
@@ -209,7 +209,7 @@ void NBooleanOperator::operatorOr(CodeGenContext& context) {
 	context.addValueStackSymbol(
 			std::shared_ptr<PSLang::Variable>(new PSLang::Variable(var)));
 }
-void NAssignment::accept(CodeGenContext& context) {
+void NAssignment::accept(CodeGen& context) {
 
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
 	Variable_ptr var = context.getVariable(lhs.name);
@@ -222,7 +222,7 @@ void NAssignment::accept(CodeGenContext& context) {
 	context.addInstruction("MOV", lhsVariable->getValue(), rhsValue->getValue());
 }
 
-void NBlock::accept(CodeGenContext& context) {
+void NBlock::accept(CodeGen& context) {
 
 	StatementList::const_iterator it;
 	for (it = statements.begin(); it != statements.end(); it++) {
@@ -233,11 +233,11 @@ void NBlock::accept(CodeGenContext& context) {
 
 }
 
-void NExpressionStatement::accept(CodeGenContext& context) {
+void NExpressionStatement::accept(CodeGen& context) {
 	expression.accept(context);
 }
 
-void NVariableDeclaration::accept(CodeGenContext& context) {
+void NVariableDeclaration::accept(CodeGen& context) {
 	std::stringstream ss;
 	std::cout << "Creating variable declaration " << type.name << " " << id.name
 			<< std::endl;
@@ -257,7 +257,7 @@ void NVariableDeclaration::accept(CodeGenContext& context) {
 
 }
 
-void NArrayDeclaration::accept(CodeGenContext& context) {
+void NArrayDeclaration::accept(CodeGen& context) {
 	std::stringstream ss;
 
 	int arraySize = 1;
@@ -283,7 +283,7 @@ void NArrayDeclaration::accept(CodeGenContext& context) {
 
 }
 
-void NFunctionDeclaration::accept(CodeGenContext& context) {
+void NFunctionDeclaration::accept(CodeGen& context) {
 	auto labelName = context.addJumpWithLabel("JMP");
 	context.createFunction(id.name, Instruction::_instuctionCounter);
 	for (auto it = arguments.begin(); it != arguments.end(); ++it) {
@@ -299,7 +299,7 @@ void NFunctionDeclaration::accept(CodeGenContext& context) {
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 }
 
-void NIfStatement::accept(CodeGenContext& context) {
+void NIfStatement::accept(CodeGen& context) {
 	boolExpr.accept(context);
 	Symbol_ptr var = context.getSymbolFromValueStack();
 	context.addInstruction("MOV", var->getTypeRegister() + "1", var->getValue());
@@ -310,7 +310,7 @@ void NIfStatement::accept(CodeGenContext& context) {
 	context.createLabel(labelName, Instruction::_instuctionCounter);
 }
 
-void NIfElseStatement::accept(CodeGenContext& context) {
+void NIfElseStatement::accept(CodeGen& context) {
 	boolExpr.accept(context);
 	Symbol_ptr var = context.getSymbolFromValueStack();
 	context.addInstruction("MOV", var->getTypeRegister() + "1", var->getValue());
@@ -325,7 +325,7 @@ void NIfElseStatement::accept(CodeGenContext& context) {
 	context.createLabel(endIfLabel, Instruction::_instuctionCounter);
 }
 
-void NWhileStatement::accept(CodeGenContext& context) {
+void NWhileStatement::accept(CodeGen& context) {
 	int beginWhile = Instruction::_instuctionCounter;
 	boolExpr.accept(context);
 	Symbol_ptr var = context.getSymbolFromValueStack();
@@ -340,7 +340,7 @@ void NWhileStatement::accept(CodeGenContext& context) {
 	context.createLabel(beginWhileLabel, beginWhile);
 }
 
-void NForStatement::accept(CodeGenContext& context) {
+void NForStatement::accept(CodeGen& context) {
 	assigment.accept(context);
 	int beginWhile = Instruction::_instuctionCounter;
 	boolExpr.accept(context);

@@ -21,7 +21,7 @@ std::ostream& operator <<(std::ostream& o, const Instruction& a) {
 	return o;
 }
 
-PSLang::Variable CodeGenContext::createArray(std::string& name,
+PSLang::Variable CodeGen::createArray(std::string& name,
 		PSLang::SymbolType type, std::vector<long int> indexes) {
 	if (locals.find(name) != std::end(locals)) {
 		throw std::runtime_error(
@@ -40,7 +40,7 @@ PSLang::Variable CodeGenContext::createArray(std::string& name,
 
 }
 
-PSLang::Variable CodeGenContext::createVariable(std::string & name,
+PSLang::Variable CodeGen::createVariable(std::string & name,
 		PSLang::SymbolType type, bool isTemporary, int size) {
 
 	if (locals.find(name) == std::end(locals)) {
@@ -70,7 +70,7 @@ PSLang::Variable CodeGenContext::createVariable(std::string & name,
 	}
 
 }
-PSLang::Variable CodeGenContext::createTemporaryVariable(
+PSLang::Variable CodeGen::createTemporaryVariable(
 		PSLang::SymbolType type) {
 	_temporaryVariableCounter++;
 	std::string proposeName = std::string(
@@ -78,7 +78,7 @@ PSLang::Variable CodeGenContext::createTemporaryVariable(
 	return createVariable(proposeName, type, true);
 }
 
-void CodeGenContext::clearTemporaryVariables() {
+void CodeGen::clearTemporaryVariables() {
 	auto iter = locals.begin();
 	auto endIter = locals.end();
 	for (; iter != endIter;) {
@@ -90,7 +90,7 @@ void CodeGenContext::clearTemporaryVariables() {
 	}
 }
 
-Variable_ptr CodeGenContext::getVariable(const std::string& name) {
+Variable_ptr CodeGen::getVariable(const std::string& name) {
 	if (locals.find(name) == std::end(locals)) {
 		throw std::runtime_error("Variable is not declared");
 	}
@@ -98,23 +98,23 @@ Variable_ptr CodeGenContext::getVariable(const std::string& name) {
 	return var;
 }
 
-std::string CodeGenContext::addJumpWithLabel(const std::string& command) {
+std::string CodeGen::addJumpWithLabel(const std::string& command) {
 	int id = Instruction::_instuctionCounter;
 	std::string labelName = "__label-" + toString(id);
 	programInstructions.push_back(Instruction(command, labelName));
 	return labelName;
 }
 
-void CodeGenContext::createLabel(const std::string& name, const int& value) {
+void CodeGen::createLabel(const std::string& name, const int& value) {
 	labels.insert(std::make_pair(name, value));
 }
-void CodeGenContext::clearLabels() {
+void CodeGen::clearLabels() {
 	auto begin = std::begin(labels);
 	auto end = std::end(labels);
 	labels.erase(begin, end);
 }
 
-void CodeGenContext::swapLabels() {
+void CodeGen::swapLabels() {
 	for (PSLang::Instruction& instruction : programInstructions) {
 		if (boost::starts_with(instruction.getParam1(), "__label")) {
 			int ip = labels.find(instruction.getParam1())->second;
@@ -127,7 +127,7 @@ void CodeGenContext::swapLabels() {
 	}
 }
 
-void CodeGenContext::createFunction(const std::string& name,
+void CodeGen::createFunction(const std::string& name,
 		int instuctionStart) {
 	if (functions.find(name) != std::end(functions)) {
 		throw std::runtime_error(
@@ -136,28 +136,28 @@ void CodeGenContext::createFunction(const std::string& name,
 	functions.insert(std::make_pair(name, instuctionStart));
 }
 
-void CodeGenContext::addValueStackSymbol(Symbol_ptr symbol)
+void CodeGen::addValueStackSymbol(Symbol_ptr symbol)
 {
 	valueStack.push(symbol);
 }
 
-Symbol_ptr CodeGenContext::getSymbolFromValueStack()
+Symbol_ptr CodeGen::getSymbolFromValueStack()
 {
 	Symbol_ptr symbol = valueStack.top();
 	valueStack.pop();
 	return symbol;
 }
 
-void CodeGenContext::addInstruction(const std::string& cmd,
+void CodeGen::addInstruction(const std::string& cmd,
 		const std::string& param1) {
 	programInstructions.push_back(Instruction(cmd, param1));
 }
-void CodeGenContext::addInstruction(const std::string& cmd,
+void CodeGen::addInstruction(const std::string& cmd,
 		const std::string& param1, const std::string& param2) {
 	programInstructions.push_back(Instruction(cmd, param1, param2));
 }
 
-void CodeGenContext::generateCode(NBlock &root) {
+void CodeGen::generateCode(NBlock &root) {
 	std::cout << "Generating code...\n";
 	root.accept(*this);
 	swapLabels();

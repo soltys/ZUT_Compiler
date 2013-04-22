@@ -1,6 +1,7 @@
 
 #ifndef CODEGEN_H_
 #define CODEGEN_H_
+#include "CodeGenBase.hpp"
 #include "Node.h"
 #include "Symbol.h"
 #include "Instruction.h"
@@ -18,7 +19,7 @@ typedef std::shared_ptr<PSLang::Variable> Variable_ptr;
 /**
  *  Code generating class, based on AST
  */
-class CodeGenContext {
+class CodeGen:public CodeGenBase {
 
 	int _temporaryVariableCounter;
 	std::map<std::string, int> labels;
@@ -27,8 +28,8 @@ class CodeGenContext {
 	std::stack<Symbol_ptr> valueStack;
 public:
 	std::ofstream outputStream;
-	CodeGenContext() :
-			_temporaryVariableCounter(0), outputStream("app.asm") {
+	CodeGen(std::string outputFile) :
+			_temporaryVariableCounter(0), outputStream(outputFile) {
 
 	}
 	PSLang::Variable createVariable(std::string& name, PSLang::SymbolType type,
@@ -62,7 +63,7 @@ public:
 
 
 
-	virtual ~CodeGenContext() {
+	virtual ~CodeGen() {
 
 	}
 };

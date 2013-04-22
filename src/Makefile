@@ -1,17 +1,24 @@
 CXX = g++
-CXXFLAGS = -g -Wall -std=c++11
-LDLIBS = -lfl
+
+LLVM_MODULES = core
+LLVM_CPPFLAGS = `llvm-config --cppflags`
+LLVM_LDFLAGS = `llvm-config --ldflags`
+LLVM_LIBS = `llvm-config --libs $(LLVM_MODULES)`
+
+
+CXXFLAGS = -g -Wall -std=c++11 $(LLVM_CPPFLAGS)
+LDLIBS = -lfl $(LLVM_LDFLAGS)
 LEX = flex
 BISON = bison
 EXE = pslang
 RM = rm -f
-OBJS =  main.o  Driver.o  Symbol.o Node.o CodeGen.o Instruction.o 
+OBJS =  main.o  Driver.o  Symbol.o Node.o CodeGen.o Instruction.o CodeGenLLVM.o
 GENOBJS = lexer.o parser.o
 ALLOBJS = $(OBJS) $(GENOBJS)
 all: pslang
 
 pslang: $(ALLOBJS)
-	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $(EXE)
+	$(CXX) $(CXXFLAGS) $^ $(LLVM_LIBS)  $(LDLIBS) -o $(EXE)
 
 lexer: lexer.o
 	$(CXX) $(CXXFLAGS) $^ $(LDLIBS) -o $@ 
