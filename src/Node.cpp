@@ -30,14 +30,16 @@ void NIdentifier::accept(CodeGenContext& context) {
 
 void NArrayIdentifier::accept(CodeGenContext& context) {
 
+	std::cout << "Array indent" << std::endl;
+
 	Variable_ptr var = context.getVariable(name);
+	context.addInstruction("MOV","R0", toString(var->offset));
+	NExpression* arrayOffset = indexes.back();
+	arrayOffset->accept(context);
+	Symbol_ptr arrayOffsetValue = context.getSymbolFromValueStack();
+	context.addInstruction("ADD", "R0", arrayOffsetValue->getValue());
 
-	int arrayOffset = indexes.back();
-	int memoryOffset = var->offset + arrayOffset;
-
-	std::cout << "indexes.size(): " << var->indexes.size() << std::endl;
 	if (indexes.size() > 1) {
-		int multiDimensionOffset = 1;
 		auto varIt = var->indexes.begin();
 		++varIt;
 		for (auto it = indexes.begin();
@@ -45,16 +47,19 @@ void NArrayIdentifier::accept(CodeGenContext& context) {
 				++it) {
 			for (auto arrayIt = varIt; arrayIt != var->indexes.end();
 					++arrayIt) {
-				multiDimensionOffset += (*arrayIt) * (*it);
+				std::shared_ptr<NExpression> integer = std::shared_ptr<NExpression>(new NInteger(*arrayIt));
+				auto binaryOp = NBinaryOperator(*integer,token::TMUL,**it);
+				binaryOp.accept(context);
+				Symbol_ptr mulValue = context.getSymbolFromValueStack();
+					context.addInstruction("ADD", "R0", mulValue->getValue());
+
 			}
 			++varIt;
 		}
-		memoryOffset += multiDimensionOffset;
+
 	}
 
-	std::cout << "memory offset: " << memoryOffset << std::endl;
-
-	auto stackValue = Variable_ptr(new Variable(memoryOffset, var->getType()));
+	auto stackValue = Symbol_ptr(new Address(SymbolType::Int));
 	context.addValueStackSymbol(stackValue);
 
 }
@@ -336,7 +341,7 @@ void NWhileStatement::accept(CodeGenContext& context) {
 }
 
 void NForStatement::accept(CodeGenContext& context) {
-	varDecl.accept(context);
+	assigment.accept(context);
 	int beginWhile = Instruction::_instuctionCounter;
 	boolExpr.accept(context);
 	Symbol_ptr var = context.getSymbolFromValueStack();

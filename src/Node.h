@@ -78,8 +78,8 @@ public:
 class NArrayIdentifier: public NIdentifier {
 public:
 
-	IndexList indexes;
-	NArrayIdentifier(NIdentifier& id, const IndexList& indexes) :
+	ExpressionList indexes;
+	NArrayIdentifier(NIdentifier& id, const ExpressionList& indexes) :
 		NIdentifier(id.name),indexes(indexes) {
 	}
 	virtual void accept(CodeGenContext& context);
@@ -227,13 +227,13 @@ public:
 
 
 class NForStatement:public NStatement{
-	NStatement& varDecl;
+	NExpression& assigment;
 	NExpression& boolExpr;
 	NStatement& exprStmt;
 	NBlock& block;
 public:
-	NForStatement(NStatement& varDecl,NExpression& boolExpr,NStatement& exprStmt,  NBlock& block):
-		varDecl(varDecl),boolExpr(boolExpr),exprStmt(exprStmt),block(block){}
+	NForStatement(NExpression& assigment,NExpression& boolExpr,NStatement& exprStmt,  NBlock& block):
+		assigment(assigment),boolExpr(boolExpr),exprStmt(exprStmt),block(block){}
 
 	virtual void accept(CodeGenContext& context);
 };

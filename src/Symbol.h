@@ -30,10 +30,11 @@ protected:
 public:
 	Variable(const int offset, const SymbolType type);
 	Variable(const int offset, const int size, const SymbolType type);
-	Variable(const int offset, std::vector<long int> indexes, const SymbolType type);
-	virtual std::string getValue() ;
+	Variable(const int offset, std::vector<long int> indexes,
+			const SymbolType type);
+	virtual std::string getValue();
 	int getSize();
-	virtual bool isTemporaryValue() ;
+	virtual bool isTemporaryValue();
 	std::vector<long int> indexes;
 	int offset;
 
@@ -65,6 +66,17 @@ public:
 		return toString(value);
 	}
 	virtual ~FloatConstant() {
+	}
+};
+
+class Address: public Symbol {
+public:
+	Address(const SymbolType type) :
+			Symbol(type) {
+	}
+
+	virtual std::string getValue() {
+		return "@R0";
 	}
 };
 

@@ -80,13 +80,13 @@ static int yylex(PSLang::Parser::semantic_type *yylval,
 
 
 %type <ident> ident array_ident
-%type <expr> numeric expr 
+%type <expr> numeric expr array_index assignment 
 %type <varvec> func_decl_args
-%type <exprvec> call_args
+%type <exprvec> call_args array_indexes
 %type <block> program stmts block
 %type <stmt> stmt var_decl func_decl if_stmt while_stmt for_stmt
-%type <index> array_index
-%type <indexes> array_indexes
+%type <index> array_index_const
+%type <indexes> array_indexes_const
 %start program
 
 %%
@@ -116,7 +116,7 @@ block : TLBRACE stmts TRBRACE { $$ = $2; }
 
 var_decl : ident ident { $$ = new PSLang::NVariableDeclaration(*$1, *$2); }
          | ident ident TEQUAL expr { $$ = new NVariableDeclaration(*$1, *$2, $4); }
-         | ident ident array_indexes  	{$$ = new NArrayDeclaration(*$1, *$2, *$3); delete $3;} 
+         | ident ident array_indexes_const  	{$$ = new NArrayDeclaration(*$1, *$2, *$3); delete $3;} 
          ;
         
 func_decl : ident ident TLPAREN func_decl_args TRPAREN block 
@@ -130,13 +130,20 @@ func_decl_args :  { $$ = new VariableList(); }
 
 ident : TIDENTIFIER { $$ = new NIdentifier(*$1); delete $1; }	    	  
       ;
-array_indexes:array_index {$$ = new IndexList(); $$->push_back($1);}
+array_indexes:array_index {$$ = new ExpressionList(); $$->push_back($1);}
 			| array_indexes array_index {$1->push_back($2);}
             ;
 
-array_index: TLBRACKET TINTEGER TRBRACKET { $$ = atol($2->c_str()); delete $2;}
+array_index: TLBRACKET expr TRBRACKET { $$ = $2;}
           ;
 array_ident: ident array_indexes   {$$ = new NArrayIdentifier(*$<ident>1, *$2);   }
+          ;
+          
+array_indexes_const:array_index_const {$$ = new IndexList(); $$->push_back($1);}
+			| array_indexes_const array_index_const {$1->push_back($2);}
+            ;
+
+array_index_const: TLBRACKET TINTEGER TRBRACKET { $$ = atol($2->c_str()); delete $2;}
           ;
 
  
@@ -144,9 +151,10 @@ numeric : TINTEGER { $$ = new NInteger(atol($1->c_str())); delete $1; }
         | TDOUBLE { $$ = new NDouble(atof($1->c_str())); delete $1; }
         ;
     
-   
-expr : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }	
-     | array_ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); } 
+assignment : ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); }
+	   
+expr : assignment 
+	 | array_ident TEQUAL expr { $$ = new NAssignment(*$<ident>1, *$3); } 
      | ident TLPAREN call_args TRPAREN { $$ = new PSLang::NMethodCall(*$1, *$3); delete $3; }
      | ident { $<ident>$ = $1; }
      | array_ident { $<ident>$ = $1;}    
@@ -179,7 +187,7 @@ if_stmt : TIF TLPAREN expr TRPAREN block { $$ = new NIfStatement(*$3,*$5);}
 while_stmt: TWHILE TLPAREN expr TRPAREN block {$$ = new NWhileStatement(*$3,*$5);}
 		  ;
 
-for_stmt: TFOR TLPAREN var_decl TSEMICOLON expr TSEMICOLON stmt TRPAREN block { $$ = new NForStatement(*$3,*$5,*$7,*$9);}
+for_stmt: TFOR TLPAREN assignment TSEMICOLON expr TSEMICOLON stmt TRPAREN block { $$ = new NForStatement(*$3,*$5,*$7,*$9);}
 %%
 
 void PSLang::Parser::error( const PSLang::Parser::location_type &l,
