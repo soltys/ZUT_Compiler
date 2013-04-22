@@ -19,3 +19,5 @@ Możliwości języka
 * Funkcje z obsługą parametrów i rekurencją (nie obsługuje zwracania wartości)
 
 Język w założeniu ma przypominać C. Mogą wystąpić wyjątki od reguły, aby zmylić osobę, która będzie próbowała oddać gotowca :)
+
+Język kopiuje wszystkie nie dogoności z języka ANSI C, czyli np. wszystkie deklaracje zmiennych powinny być na początku bloku.
