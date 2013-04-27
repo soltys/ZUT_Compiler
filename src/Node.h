@@ -35,18 +35,20 @@ public:
 	virtual ~Node() {
 	}
 	virtual void accept(CodeGen& context) =0;
-	virtual llvm::Value* codeGen(CodeGenLLVM& context){return nullptr;};
+	virtual llvm::Value* codeGen(CodeGenLLVM& context){return nullptr;}
 
 };
 
 class NExpression: public Node {
 public:
 	virtual void accept(CodeGen& context) =0;
+virtual llvm::Value* codeGen(CodeGenLLVM& context){return nullptr;}
 };
 
 class NStatement: public Node {
 public:
 	virtual void accept(CodeGen& context) =0;
+	virtual llvm::Value* codeGen(CodeGenLLVM& context){return nullptr;}
 };
 
 
@@ -58,7 +60,7 @@ public:
 	}
 
 	virtual void accept(CodeGen& context);
-
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NDouble: public NExpression {
@@ -68,7 +70,7 @@ public:
 			value(value) {
 	}
 	virtual void accept(CodeGen& context);
-
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NIdentifier: public NExpression {
@@ -78,6 +80,7 @@ public:
 			name(name) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NArrayIdentifier: public NIdentifier {
@@ -88,6 +91,7 @@ public:
 		NIdentifier(id.name),indexes(indexes) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NMethodCall: public NExpression {
@@ -102,6 +106,7 @@ public:
 			id(id) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 
@@ -115,6 +120,7 @@ public:
 			lhs(lhs), op(op), rhs(rhs) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NBooleanOperator: public NBinaryOperator {
@@ -124,7 +130,7 @@ public:
 		NBinaryOperator(lhs, op, rhs) {
 	}
 	virtual void accept(CodeGen& context);
-
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 	void operatorAnd(CodeGen& context);
 	void operatorOr(CodeGen& context);
 };
@@ -137,6 +143,7 @@ public:
 			lhs(lhs), rhs(rhs) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 
@@ -146,6 +153,7 @@ public:
 	NBlock() {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NExpressionStatement: public NStatement {
@@ -155,6 +163,7 @@ public:
 			expression(expression) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NVariableDeclaration: public NStatement {
@@ -170,6 +179,7 @@ public:
 			type(type), id(id), assignmentExpression(assignmentExpression) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 
 };
 
@@ -183,6 +193,7 @@ public:
 
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NFunctionDeclaration: public NStatement {
@@ -196,6 +207,7 @@ public:
 			type(type), id(id), arguments(arguments), block(block) {
 	}
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NIfStatement:public NStatement{
@@ -207,6 +219,7 @@ public:
 		boolExpr(boolExpr),block(block){}
 
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 
@@ -218,6 +231,7 @@ public:
 		NIfStatement(boolExpr,block),elseBlock(elseBlock){}
 
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 class NWhileStatement:public NStatement{
@@ -228,6 +242,7 @@ public:
 		boolExpr(boolExpr),block(block){}
 
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 
@@ -241,6 +256,7 @@ public:
 		assigment(assigment),boolExpr(boolExpr),exprStmt(exprStmt),block(block){}
 
 	virtual void accept(CodeGen& context);
+	virtual llvm::Value* codeGen(CodeGenLLVM& context);
 };
 
 } // END NAMESPACE PSLang
