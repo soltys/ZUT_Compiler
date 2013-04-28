@@ -18,11 +18,12 @@
 #include <llvm/Support/raw_os_ostream.h>
 using namespace llvm;
 using namespace std;
-namespace PSLang {
+namespace PSLang
+{
 typedef PSLang::Parser::token token;
 CodeGenLLVM::CodeGenLLVM(std::string fileName) :
-		outputStream(fileName, std::ofstream::out), builder(getGlobalContext()), mainBlock(
-				nullptr) {
+		outputStream(fileName, std::ofstream::out), builder(getGlobalContext()), mainBlock(nullptr)
+{
 
 	theModule = new Module("pslang module", getGlobalContext());
 
@@ -42,38 +43,43 @@ CodeGenLLVM::CodeGenLLVM(std::string fileName) :
 
 }
 
-CodeGenLLVM::~CodeGenLLVM() {
+CodeGenLLVM::~CodeGenLLVM()
+{
 	// TODO Auto-generated destructor stub
 }
 
-static Type *typeOf(const NIdentifier& type) {
-	if (type.name.compare("int") == 0) {
+static Type *typeOf(const NIdentifier& type)
+{
+	if (type.name.compare("int") == 0)
+	{
 		return Type::getInt64Ty(getGlobalContext());
-	} else if (type.name.compare("double") == 0) {
+	}
+	else if (type.name.compare("double") == 0)
+	{
 		return Type::getDoubleTy(getGlobalContext());
 	}
 	return Type::getVoidTy(getGlobalContext());
 }
 
-llvm::Value* CodeGenLLVM::getVariable(const std::string& name) {
+llvm::Value* CodeGenLLVM::getVariable(const std::string& name)
+{
 	return namedValues[name];
 }
 
-void CodeGenLLVM::generateCode(NBlock& root) {
+void CodeGenLLVM::generateCode(NBlock& root)
+{
 	std::cout << "Generating code...\n";
 
 	/* Create the top level interpreter function to call as entry */
 	vector<Type*> argTypes;
-	FunctionType *ftype = FunctionType::get(Type::getVoidTy(getGlobalContext()),
-			argTypes, false);
-	Function* mainFunction = Function::Create(ftype,
-			GlobalValue::InternalLinkage, "main", theModule);
-	mainBlock = BasicBlock::Create(getGlobalContext(), "entry", mainFunction,
-			0);
-
+	FunctionType *ftype = FunctionType::get(Type::getVoidTy(getGlobalContext()), argTypes, false);
+	mainFunction = Function::Create(ftype, GlobalValue::InternalLinkage, "main", theModule);
+	mainBlock = BasicBlock::Create(getGlobalContext(), "entry", mainFunction, 0);
+	builder.SetInsertPoint(mainBlock);
 	root.codeGen(*this);
 
-	ReturnInst::Create(getGlobalContext(), mainBlock);
+	builder.CreateRet(ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 0, true));
+	//theFPM->run(*mainFunction);
 	//raw_os_ostream rawStream(outputStream);
 //	WriteBitcodeToFile(theModule,rawStream);
 	theModule->dump();
@@ -81,65 +87,87 @@ void CodeGenLLVM::generateCode(NBlock& root) {
 
 }
 
-Value* NInteger::codeGen(CodeGenLLVM& context) {
+Value* NInteger::codeGen(CodeGenLLVM& context)
+{
 	return ConstantInt::get(Type::getInt32Ty(getGlobalContext()), value, true);
 }
 
-Value* NDouble::codeGen(CodeGenLLVM& context) {
+Value* NDouble::codeGen(CodeGenLLVM& context)
+{
 	return ConstantFP::get(Type::getDoubleTy(getGlobalContext()), value);
 }
-Value* NArrayIdentifier::codeGen(CodeGenLLVM& context) {
+Value* NArrayIdentifier::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
-Value* NIdentifier::codeGen(CodeGenLLVM& context) {
+Value* NIdentifier::codeGen(CodeGenLLVM& context)
+{
 	Value *V = context.getVariable(name);
 
 	return new LoadInst(V, "", false, context.mainBlock);
 }
 
-Value* NMethodCall::codeGen(CodeGenLLVM& context) {
+Value* NMethodCall::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
 
-Value* NBinaryOperator::codeGen(CodeGenLLVM& context) {
+Value* NBinaryOperator::codeGen(CodeGenLLVM& context)
+{
 	std::cout << "Creating binary operation " << std::endl;
-	Instruction::BinaryOps instr;
-	switch (op) {
+	switch (op)
+	{
 	case token::TPLUS:
-		instr = Instruction::Add;
+		return context.builder.CreateAdd(lhs.codeGen(context), rhs.codeGen(context));
 		break;
 	case token::TMINUS:
-		instr = Instruction::Sub;
+		return context.builder.CreateSub(lhs.codeGen(context), rhs.codeGen(context));
 		break;
 	case token::TMUL:
-		instr = Instruction::Mul;
+		return context.builder.CreateMul(lhs.codeGen(context), rhs.codeGen(context));
 		break;
 	case token::TDIV:
-		instr = Instruction::SDiv;
+		return context.builder.CreateSDiv(lhs.codeGen(context), rhs.codeGen(context));
 		break;
+	case token::TCEQ:
+		return context.builder.CreateICmpEQ(lhs.codeGen(context), rhs.codeGen(context));
+	case token::TCNE:
+		return context.builder.CreateICmpNE(lhs.codeGen(context), rhs.codeGen(context));
+	case token::TCGT:
+		return context.builder.CreateICmpUGT(lhs.codeGen(context), rhs.codeGen(context));
+	case token::TCGE:
+		return context.builder.CreateICmpUGE(lhs.codeGen(context), rhs.codeGen(context));
+	case token::TCLT:
+		return context.builder.CreateICmpULT(lhs.codeGen(context), rhs.codeGen(context));
+	case token::TCLE:
+		return context.builder.CreateICmpULE(lhs.codeGen(context), rhs.codeGen(context));
+
 	default:
 		return nullptr;
 	}
+	return nullptr;
 
-	return BinaryOperator::Create(instr, lhs.codeGen(context),
-			rhs.codeGen(context), "", context.mainBlock);
 }
 
-Value* NAssignment::codeGen(CodeGenLLVM& context) {
+Value* NAssignment::codeGen(CodeGenLLVM& context)
+{
 	std::cout << "Creating assignment for " << lhs.name << std::endl;
-	if (context.namedValues.find(lhs.name) == context.namedValues.end()) {
+	if (context.namedValues.find(lhs.name) == context.namedValues.end())
+	{
 		std::cerr << "undeclared variable " << lhs.name << std::endl;
 		return NULL;
 	}
-	return new StoreInst(rhs.codeGen(context), context.namedValues[lhs.name],
-			false, context.mainBlock);
+	return context.builder.CreateStore(rhs.codeGen(context), context.namedValues[lhs.name], false);
+
 }
 
-Value* NBlock::codeGen(CodeGenLLVM& context) {
+Value* NBlock::codeGen(CodeGenLLVM& context)
+{
 
 	StatementList::const_iterator it;
 	Value *last = NULL;
-	for (it = statements.begin(); it != statements.end(); it++) {
+	for (it = statements.begin(); it != statements.end(); it++)
+	{
 		std::cout << "Generating code for " << typeid(**it).name() << std::endl;
 		last = (**it).codeGen(context);
 	}
@@ -148,49 +176,75 @@ Value* NBlock::codeGen(CodeGenLLVM& context) {
 	return last;
 }
 
-Value* NExpressionStatement::codeGen(CodeGenLLVM& context) {
-	std::cout << "Generating code for " << typeid(expression).name()
-			<< std::endl;
+Value* NExpressionStatement::codeGen(CodeGenLLVM& context)
+{
+	std::cout << "Generating code for " << typeid(expression).name() << std::endl;
 	return expression.codeGen(context);
 }
 
-Value* NArrayDeclaration::codeGen(CodeGenLLVM& context) {
+Value* NArrayDeclaration::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
 
-Value* NVariableDeclaration::codeGen(CodeGenLLVM& context) {
-	std::cout << "Creating variable declaration " << type.name << " " << id.name
-			<< std::endl;
-	AllocaInst *alloc = new AllocaInst(typeOf(type), id.name.c_str(),
-			context.mainBlock);
+Value* NVariableDeclaration::codeGen(CodeGenLLVM& context)
+{
+	std::cout << "Creating variable declaration " << type.name << " " << id.name << std::endl;
+	AllocaInst *alloc = new AllocaInst(typeOf(type), id.name.c_str(), context.mainBlock);
 	context.namedValues[id.name] = alloc;
-	if (assignmentExpression != NULL) {
+	if (assignmentExpression != NULL)
+	{
 		NAssignment assn(id, *assignmentExpression);
 		assn.codeGen(context);
 	}
 	return alloc;
 }
 
-Value* NFunctionDeclaration::codeGen(CodeGenLLVM& context) {
+Value* NFunctionDeclaration::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
 
-Value* NWhileStatement::codeGen(CodeGenLLVM& context) {
+Value* NWhileStatement::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
-Value* NForStatement::codeGen(CodeGenLLVM& context) {
-	return (nullptr);
-}
-
-Value* NIfStatement::codeGen(CodeGenLLVM& context) {
-	return (nullptr);
-}
-
-Value* NIfElseStatement::codeGen(CodeGenLLVM& context) {
+Value* NForStatement::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
 
-Value* NBooleanOperator::codeGen(CodeGenLLVM& context) {
+Value* NIfStatement::codeGen(CodeGenLLVM& context)
+{
+	Value* cond = boolExpr.codeGen(context);
+	if (cond == nullptr)
+	{
+		return nullptr;
+	}
+
+	cond = context.builder.CreateFCmpONE(cond, ConstantFP::get(getGlobalContext(), APFloat(0.0)), "ifcond");
+
+	BasicBlock *thenBB = BasicBlock::Create(getGlobalContext(), "then", context.mainFunction);
+
+	BasicBlock *mergeBB = BasicBlock::Create(getGlobalContext(), "ifcont");
+	context.builder.CreateCondBr(cond, thenBB, mergeBB);
+	context.builder.SetInsertPoint(thenBB);
+	block.codeGen(context);
+	context.builder.CreateBr(mergeBB);
+	thenBB = context.builder.GetInsertBlock();
+	context.mainFunction->getBasicBlockList().push_back(mergeBB);
+	context.builder.SetInsertPoint(mergeBB);
+
+	return mergeBB;
+}
+
+Value* NIfElseStatement::codeGen(CodeGenLLVM& context)
+{
+	return (nullptr);
+}
+
+Value* NBooleanOperator::codeGen(CodeGenLLVM& context)
+{
 	return (nullptr);
 }
 } /* namespace PSLang */

@@ -51,6 +51,7 @@ class CodeGenLLVM: public PSLang::CodeGenBase {
 public:
 	llvm::Module *theModule;
 	llvm::IRBuilder<> builder;
+	llvm::Function* mainFunction;
 	llvm::BasicBlock* mainBlock;
 	std::map<std::string, llvm::Value*> namedValues;
 	llvm::Value* getVariable(const std::string& name);
