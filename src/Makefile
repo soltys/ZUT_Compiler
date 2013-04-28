@@ -1,6 +1,6 @@
 CXX = g++
 
-LLVM_MODULES = core
+LLVM_MODULES = all
 LLVM_CPPFLAGS = `llvm-config --cppflags`
 LLVM_LDFLAGS = `llvm-config --ldflags`
 LLVM_LIBS = `llvm-config --libs $(LLVM_MODULES)`
