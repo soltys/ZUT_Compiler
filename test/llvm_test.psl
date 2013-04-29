@@ -1,9 +1,9 @@
-int b = 2+3*8+6;
+int b = 2;
 int foo = b * 100;
 int w = 0;
-if(foo > b)
+b = b +3;
+if(b > 0)
 {
-  w = 123;
+	w = 777;
 }
-
 w = w - 123;

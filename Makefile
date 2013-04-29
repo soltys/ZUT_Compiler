@@ -25,5 +25,6 @@ rebuild:
 
 test:
 	$(MAKE) -C $(TESTDIR) all
+	$(MAKE) -C $(TESTDIR) llvm
 
 .PHONY: pslang clean rebuild test doc

@@ -22,7 +22,8 @@ namespace PSLang
 {
 typedef PSLang::Parser::token token;
 CodeGenLLVM::CodeGenLLVM(std::string fileName) :
-		outputStream(fileName, std::ofstream::out), builder(getGlobalContext()), mainBlock(nullptr)
+		outputStream(fileName, std::ofstream::out), builder(getGlobalContext()), mainFunction(nullptr), mainBlock(
+				nullptr)
 {
 
 	theModule = new Module("pslang module", getGlobalContext());
@@ -52,7 +53,7 @@ static Type *typeOf(const NIdentifier& type)
 {
 	if (type.name.compare("int") == 0)
 	{
-		return Type::getInt64Ty(getGlobalContext());
+		return Type::getDoubleTy(getGlobalContext());
 	}
 	else if (type.name.compare("double") == 0)
 	{
@@ -78,7 +79,7 @@ void CodeGenLLVM::generateCode(NBlock& root)
 	builder.SetInsertPoint(mainBlock);
 	root.codeGen(*this);
 
-	builder.CreateRet(ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 0, true));
+	builder.CreateRetVoid();
 	//theFPM->run(*mainFunction);
 	//raw_os_ostream rawStream(outputStream);
 //	WriteBitcodeToFile(theModule,rawStream);
@@ -89,7 +90,7 @@ void CodeGenLLVM::generateCode(NBlock& root)
 
 Value* NInteger::codeGen(CodeGenLLVM& context)
 {
-	return ConstantInt::get(Type::getInt32Ty(getGlobalContext()), value, true);
+	return ConstantFP::get(Type::getDoubleTy(getGlobalContext()), value);
 }
 
 Value* NDouble::codeGen(CodeGenLLVM& context)
@@ -104,7 +105,7 @@ Value* NIdentifier::codeGen(CodeGenLLVM& context)
 {
 	Value *V = context.getVariable(name);
 
-	return new LoadInst(V, "", false, context.mainBlock);
+	return new LoadInst(V, name, false, context.mainBlock);
 }
 
 Value* NMethodCall::codeGen(CodeGenLLVM& context)
@@ -115,32 +116,35 @@ Value* NMethodCall::codeGen(CodeGenLLVM& context)
 Value* NBinaryOperator::codeGen(CodeGenLLVM& context)
 {
 	std::cout << "Creating binary operation " << std::endl;
+	Value* cmp;
 	switch (op)
 	{
 	case token::TPLUS:
-		return context.builder.CreateAdd(lhs.codeGen(context), rhs.codeGen(context));
-		break;
+		return context.builder.CreateFAdd(lhs.codeGen(context), rhs.codeGen(context), "addval");
 	case token::TMINUS:
-		return context.builder.CreateSub(lhs.codeGen(context), rhs.codeGen(context));
-		break;
+		return context.builder.CreateFSub(lhs.codeGen(context), rhs.codeGen(context));
 	case token::TMUL:
-		return context.builder.CreateMul(lhs.codeGen(context), rhs.codeGen(context));
-		break;
+		return context.builder.CreateFMul(lhs.codeGen(context), rhs.codeGen(context), "mulval");
 	case token::TDIV:
-		return context.builder.CreateSDiv(lhs.codeGen(context), rhs.codeGen(context));
-		break;
+		return context.builder.CreateFDiv(lhs.codeGen(context), rhs.codeGen(context));
 	case token::TCEQ:
-		return context.builder.CreateICmpEQ(lhs.codeGen(context), rhs.codeGen(context));
+		cmp = context.builder.CreateFCmpUEQ(lhs.codeGen(context), rhs.codeGen(context));
+		return context.builder.CreateUIToFP(cmp, Type::getDoubleTy(getGlobalContext()), "booltmp");
 	case token::TCNE:
-		return context.builder.CreateICmpNE(lhs.codeGen(context), rhs.codeGen(context));
+		cmp = context.builder.CreateFCmpUNE(lhs.codeGen(context), rhs.codeGen(context));
+		return context.builder.CreateUIToFP(cmp, Type::getDoubleTy(getGlobalContext()), "booltmp");
 	case token::TCGT:
-		return context.builder.CreateICmpUGT(lhs.codeGen(context), rhs.codeGen(context));
+		cmp = context.builder.CreateFCmpUGT(lhs.codeGen(context), rhs.codeGen(context));
+		return context.builder.CreateUIToFP(cmp, Type::getDoubleTy(getGlobalContext()), "booltmp");
 	case token::TCGE:
-		return context.builder.CreateICmpUGE(lhs.codeGen(context), rhs.codeGen(context));
+		cmp = context.builder.CreateFCmpUGE(lhs.codeGen(context), rhs.codeGen(context));
+		return context.builder.CreateUIToFP(cmp, Type::getDoubleTy(getGlobalContext()), "booltmp");
 	case token::TCLT:
-		return context.builder.CreateICmpULT(lhs.codeGen(context), rhs.codeGen(context));
+		cmp = context.builder.CreateFCmpULT(lhs.codeGen(context), rhs.codeGen(context));
+		return context.builder.CreateUIToFP(cmp, Type::getDoubleTy(getGlobalContext()), "booltmp");
 	case token::TCLE:
-		return context.builder.CreateICmpULE(lhs.codeGen(context), rhs.codeGen(context));
+		cmp = context.builder.CreateFCmpULE(lhs.codeGen(context), rhs.codeGen(context));
+		return context.builder.CreateUIToFP(cmp, Type::getDoubleTy(getGlobalContext()), "booltmp");
 
 	default:
 		return nullptr;
@@ -221,8 +225,10 @@ Value* NIfStatement::codeGen(CodeGenLLVM& context)
 	{
 		return nullptr;
 	}
-
-	cond = context.builder.CreateFCmpONE(cond, ConstantFP::get(getGlobalContext(), APFloat(0.0)), "ifcond");
+	// Convert condition to a bool by comparing equal to 0.0.
+	  cond = context.builder.CreateFCmpONE(cond,
+	                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
+	                                "ifcond");
 
 	BasicBlock *thenBB = BasicBlock::Create(getGlobalContext(), "then", context.mainFunction);
 
@@ -231,6 +237,7 @@ Value* NIfStatement::codeGen(CodeGenLLVM& context)
 	context.builder.SetInsertPoint(thenBB);
 	block.codeGen(context);
 	context.builder.CreateBr(mergeBB);
+
 	thenBB = context.builder.GetInsertBlock();
 	context.mainFunction->getBasicBlockList().push_back(mergeBB);
 	context.builder.SetInsertPoint(mergeBB);
