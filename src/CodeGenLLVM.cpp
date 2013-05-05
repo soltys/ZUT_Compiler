@@ -247,7 +247,50 @@ Value* NIfStatement::codeGen(CodeGenLLVM& context)
 
 Value* NIfElseStatement::codeGen(CodeGenLLVM& context)
 {
-	return (nullptr);
+	 Value *CondV = boolExpr.codeGen(context);
+	  if (CondV == 0) return 0;
+
+	  // Convert condition to a bool by comparing equal to 0.0.
+	  CondV = context.builder.CreateFCmpONE(CondV,
+	                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
+	                                "ifcond");
+
+	  Function *TheFunction = context.builder.GetInsertBlock()->getParent();
+
+	  // Create blocks for the then and else cases.  Insert the 'then' block at the
+	  // end of the function.
+	  BasicBlock *ThenBB = BasicBlock::Create(getGlobalContext(), "then", TheFunction);
+	  BasicBlock *ElseBB = BasicBlock::Create(getGlobalContext(), "else");
+	  BasicBlock *MergeBB = BasicBlock::Create(getGlobalContext(), "ifcont");
+
+	  context.builder.CreateCondBr(CondV, ThenBB, ElseBB);
+
+	  // Emit then value.
+	  context.builder.SetInsertPoint(ThenBB);
+
+	  Value *ThenV = this->block.codeGen(context);
+	  if (ThenV == 0) return 0;
+
+	  context.builder.CreateBr(MergeBB);
+	  // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
+	  ThenBB = context.builder.GetInsertBlock();
+
+	  // Emit else block.
+	  TheFunction->getBasicBlockList().push_back(ElseBB);
+	  context.builder.SetInsertPoint(ElseBB);
+
+	  Value *ElseV = this->elseBlock.codeGen(context);
+	  if (ElseV == 0) return 0;
+
+	  context.builder.CreateBr(MergeBB);
+	  // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
+	  ElseBB = context.builder.GetInsertBlock();
+
+	  // Emit merge block.
+	  TheFunction->getBasicBlockList().push_back(MergeBB);
+	  context.builder.SetInsertPoint(MergeBB);
+
+	  return MergeBB;
 }
 
 Value* NBooleanOperator::codeGen(CodeGenLLVM& context)
