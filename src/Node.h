@@ -131,8 +131,8 @@ public:
 	}
 	virtual void accept(CodeGen& context);
 	virtual llvm::Value* codeGen(CodeGenLLVM& context);
-	void operatorAnd(CodeGen& context);
-	void operatorOr(CodeGen& context);
+	void compareValues(const std::string& cmpInstruction, const std::string& ifTrue,
+			const std::string& ifFalse, CodeGen& context);
 };
 
 class NAssignment: public NExpression {
